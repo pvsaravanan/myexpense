@@ -392,17 +392,15 @@ function ContributeModal({
           {error && <p className="mt-1 text-xs text-expense">{error}</p>}
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Date" htmlFor="contrib-date">
-            <Input
-              id="contrib-date"
-              type="date"
-              value={date}
-              max={toISODate(new Date())}
-              onChange={(e) => setDate(e.target.value)}
-            />
-          </Field>
-        </div>
+        <Field label="Date" htmlFor="contrib-date">
+          <Input
+            id="contrib-date"
+            type="date"
+            value={date}
+            max={toISODate(new Date())}
+            onChange={(e) => setDate(e.target.value)}
+          />
+        </Field>
 
         <Field label="Note" htmlFor="contrib-note" hint="Optional">
           <Textarea

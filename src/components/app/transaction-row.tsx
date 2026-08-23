@@ -115,7 +115,7 @@ export function TransactionRow({
 
       <button onClick={() => openEdit(txn)} className="min-w-0 flex-1 text-left">
         <div className="flex items-center gap-2">
-          <p className="truncate text-sm font-medium text-fg">{txn.description}</p>
+          <p className="min-w-0 flex-1 truncate text-sm font-medium text-fg">{txn.description}</p>
           {txn.recurringId && (
             <span className="shrink-0 rounded bg-brand-soft px-1.5 py-0.5 text-2xs font-medium text-brand-hover">auto</span>
           )}
@@ -134,7 +134,7 @@ export function TransactionRow({
       <div className="relative">
         <button
           onClick={() => setMenuOpen((o) => !o)}
-          className="flex h-8 w-8 items-center justify-center rounded-none p-1 text-faint opacity-100 sm:opacity-0 transition-opacity hover:bg-surface hover:text-fg focus:opacity-100 sm:group-hover:opacity-100 active:bg-surface-2"
+          className="flex h-9 w-9 items-center justify-center rounded-none p-1 text-faint opacity-100 sm:opacity-0 transition-opacity hover:bg-surface hover:text-fg focus:opacity-100 sm:group-hover:opacity-100 active:bg-surface-2"
           aria-label="Transaction actions"
         >
           <MoreVertical className="h-4 w-4" />

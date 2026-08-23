@@ -299,10 +299,10 @@ function RecurringRow({
 
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <p className="truncate text-sm font-medium text-fg">{rule.name}</p>
-          <Badge tone={TYPE_BADGE[rule.type]}>{TYPE_LABEL[rule.type]}</Badge>
+          <p className="min-w-0 flex-1 truncate text-sm font-medium text-fg">{rule.name}</p>
+          <Badge tone={TYPE_BADGE[rule.type]} className="shrink-0">{TYPE_LABEL[rule.type]}</Badge>
           {rule.autoPost && (
-            <span className="inline-flex items-center gap-0.5 rounded bg-brand-soft px-1.5 py-0.5 text-2xs font-medium text-brand-hover">
+            <span className="inline-flex shrink-0 items-center gap-0.5 rounded bg-brand-soft px-1.5 py-0.5 text-2xs font-medium text-brand-hover">
               <Zap className="h-3 w-3" />
               Auto
             </span>
@@ -329,7 +329,7 @@ function RecurringRow({
         <button
           onClick={() => setMenuOpen((o) => !o)}
           disabled={busy}
-          className="rounded-none p-1 text-faint transition-colors hover:bg-surface-2 hover:text-fg"
+          className="flex h-9 w-9 items-center justify-center rounded-none text-faint transition-colors hover:bg-surface-2 hover:text-fg"
           aria-label={`Actions for ${rule.name}`}
         >
           <MoreVertical className="h-4 w-4" />
