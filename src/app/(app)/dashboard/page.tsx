@@ -70,9 +70,9 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         <BudgetRemainingCard remaining={budgetRemaining} limit={budgetLimit} />
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-3">
+      <div className="grid min-w-0 gap-5 lg:grid-cols-3">
         {/* Left / main column */}
-        <div className="space-y-5 lg:col-span-2">
+        <div className="min-w-0 space-y-5 lg:col-span-2">
           {on("monthly_spending") && <IncomeExpenseCard trend={a.incomeExpenseTrend} />}
 
           <Card>
@@ -105,7 +105,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         </div>
 
         {/* Right column */}
-        <div className="space-y-5">
+        <div className="min-w-0 space-y-5">
           {on("spending_categories") && (
             <Card>
               <CardHeader title="Spending by category" action={<Link href="/reports" className="text-label-sm uppercase text-brand-hover underline-offset-4 hover:underline">Report</Link>} />

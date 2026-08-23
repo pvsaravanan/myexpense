@@ -180,7 +180,7 @@ function CategoryReport({ a, title }: { a: ReportsAnalytics; title: string }) {
       <DistributionTiles values={rows.map((c) => c.net)} unit="category" />
 
       <div className="grid gap-5 lg:grid-cols-5">
-        <Card className="lg:col-span-2">
+        <Card className="min-w-0 lg:col-span-2">
           <CardHeader title={title} subtitle="Effective spend" />
           <CardBody>
             <div className="relative">
@@ -193,7 +193,7 @@ function CategoryReport({ a, title }: { a: ReportsAnalytics; title: string }) {
           </CardBody>
         </Card>
 
-        <Card className="lg:col-span-3">
+        <Card className="min-w-0 lg:col-span-3">
           <CardHeader title="Breakdown" subtitle={`${rows.length} categories`} />
           <CardBody className="px-0 py-0">
             <div className="overflow-x-auto">
