@@ -73,9 +73,11 @@ export default async function InsightsPage() {
 
 function Tile({ label, children, hint }: { label: string; children: React.ReactNode; hint?: string }) {
   return (
-    <div className="rounded-none border border-border bg-surface p-4 shadow-card">
+    <div className="rounded-none border border-border bg-surface p-4 shadow-card [container-type:inline-size]">
       <p className="text-xs font-medium text-muted">{label}</p>
-      <div className="mt-1.5 text-xl font-semibold tabular-nums text-fg sm:text-2xl">{children}</div>
+      {/* Fluid size so a large value fits the tile instead of wrapping; text
+          values still wrap naturally (no nowrap). */}
+      <div className="mt-1.5 font-semibold tabular-nums text-fg text-[clamp(1rem,9.5cqi,1.5rem)]">{children}</div>
       {hint && <p className="mt-1 text-2xs text-faint">{hint}</p>}
     </div>
   );
