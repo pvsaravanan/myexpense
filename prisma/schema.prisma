@@ -1,0 +1,264 @@
+// MyExpense data model.
+//
+// Money is ALWAYS stored as an integer number of paise (1 rupee = 100 paise).
+// Never use floats for money. All monetary columns are `Int` (paise).
+//
+// "enum" fields are stored as `String` and validated in the application layer
+// (see src/lib/constants.ts + zod schemas) rather than as native DB enums, so
+// adding/renaming a value is a code change with no schema migration.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  // Pooled connection (Supabase pgBouncer, port 6543) for app queries.
+  url      = env("DATABASE_URL")
+  // Direct/session connection (port 5432) for `prisma db push` / migrations,
+  // which can't run through the transaction pooler.
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  // Legacy bcrypt hash from the pre-Supabase auth system. Nullable now that
+  // Supabase Auth owns passwords; retained only so the one-off import script
+  // can seed the existing account's hash into Supabase.
+  passwordHash String?
+  // Links this profile row to the Supabase Auth user (auth.users.id, a UUID).
+  // Supabase owns identity; this table stays the FK anchor for all app data.
+  authId       String?  @unique
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  accounts     Account[]
+  categories   Category[]
+  transactions Transaction[]
+  budgets      Budget[]
+  recurring    RecurringTransaction[]
+  goals        FinancialGoal[]
+  tags         Tag[]
+  preference   UserPreference?
+}
+
+model UserPreference {
+  id               String  @id @default(cuid())
+  userId           String  @unique
+  theme            String  @default("system") // "light" | "dark" | "system"
+  currency         String  @default("INR")
+  locale           String  @default("en-IN")
+  monthStartDay    Int     @default(1) // day of month the financial month begins
+  dashboardWidgets String  @default("[]") // JSON array of widget config
+  defaultAccountId String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Account {
+  id             String    @id @default(cuid())
+  userId         String
+  name           String
+  type           String    @default("bank") // bank | cash | credit_card | savings | wallet | other
+  openingBalance Int       @default(0) // paise
+  color          String    @default("#0d9488")
+  icon           String    @default("wallet")
+  isArchived     Boolean   @default(false)
+  sortOrder      Int       @default(0)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  user             User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions     Transaction[] @relation("AccountTransactions")
+  transfersIn      Transaction[] @relation("TransferDestination")
+  recurring        RecurringTransaction[] @relation("RecurringAccount")
+  recurringInbound RecurringTransaction[] @relation("RecurringTransferDestination")
+  goals            FinancialGoal[]
+
+  // Backstop for the check-then-create race in the accounts API. Names are
+  // compared case-insensitively in the app layer; this catches exact-duplicate
+  // concurrent creates (e.g. a double-submit) that slip past that check.
+  @@unique([userId, name])
+  @@index([userId])
+}
+
+model Category {
+  id           String    @id @default(cuid())
+  userId       String
+  name         String
+  icon         String    @default("tag")
+  color        String    @default("#64748b")
+  kind         String    @default("expense") // expense | income | both
+  monthlyBudget Int?     // default monthly budget in paise (nullable)
+  parentId     String?
+  isActive     Boolean   @default(true)
+  isSystem     Boolean   @default(false)
+  sortOrder    Int       @default(0)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent          Category?        @relation("CategoryChildren", fields: [parentId], references: [id])
+  children        Category[]       @relation("CategoryChildren")
+  transactions    Transaction[]
+  budgetCategories BudgetCategory[]
+  recurring       RecurringTransaction[]
+
+  // Backstop for the check-then-create race in the categories API (see the
+  // matching note on Account).
+  @@unique([userId, name])
+  @@index([userId])
+  @@index([parentId])
+}
+
+model Transaction {
+  id                String    @id @default(cuid())
+  userId            String
+  type              String    // expense | income | transfer | refund
+  amount            Int       // paise, always positive
+  description       String
+  merchant          String?
+  date              DateTime
+  categoryId        String?
+  accountId         String
+  transferAccountId String?   // destination account for transfers
+  paymentMethod     String?   // upi | cash
+  notes             String?
+  recurringId       String?   // set when generated from a recurring rule
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  deletedAt         DateTime? // soft delete
+
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category        Category?       @relation(fields: [categoryId], references: [id])
+  account         Account         @relation("AccountTransactions", fields: [accountId], references: [id], onDelete: Cascade)
+  transferAccount Account?        @relation("TransferDestination", fields: [transferAccountId], references: [id])
+  recurring       RecurringTransaction? @relation(fields: [recurringId], references: [id])
+  tags            TransactionTag[]
+
+  @@index([userId, date])
+  @@index([userId, deletedAt])
+  @@index([accountId])
+  @@index([categoryId])
+  @@index([type])
+}
+
+model Budget {
+  id           String   @id @default(cuid())
+  userId       String
+  year         Int
+  month        Int      // 1-12
+  overallLimit Int?     // paise; overall monthly cap (nullable)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categories BudgetCategory[]
+
+  @@unique([userId, year, month])
+  @@index([userId])
+}
+
+model BudgetCategory {
+  id         String @id @default(cuid())
+  budgetId   String
+  categoryId String
+  limit      Int    // paise
+
+  budget   Budget   @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([budgetId, categoryId])
+  @@index([categoryId])
+}
+
+model RecurringTransaction {
+  id                String    @id @default(cuid())
+  userId            String
+  name              String
+  type              String    // expense | income | transfer
+  amount            Int       // paise
+  categoryId        String?
+  accountId         String
+  transferAccountId String?
+  paymentMethod     String?
+  notes             String?
+  frequency         String    // daily | weekly | monthly | quarterly | yearly
+  interval          Int       @default(1) // every N frequency units
+  startDate         DateTime
+  endDate           DateTime?
+  nextOccurrence    DateTime
+  lastPostedDate    DateTime?
+  isActive          Boolean   @default(true)
+  autoPost          Boolean   @default(false) // if true, occurrences are auto-created when due
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category        Category?     @relation(fields: [categoryId], references: [id])
+  account         Account       @relation("RecurringAccount", fields: [accountId], references: [id], onDelete: Cascade)
+  transferAccount Account?      @relation("RecurringTransferDestination", fields: [transferAccountId], references: [id])
+  transactions    Transaction[]
+
+  @@index([userId])
+  @@index([nextOccurrence])
+}
+
+model FinancialGoal {
+  id                 String    @id @default(cuid())
+  userId             String
+  name               String
+  icon               String    @default("target")
+  color              String    @default("#0d9488")
+  targetAmount       Int       // paise
+  targetDate         DateTime?
+  accountId          String?
+  status             String    @default("active") // active | achieved | archived
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account       Account?           @relation(fields: [accountId], references: [id])
+  contributions GoalContribution[]
+
+  @@index([userId])
+}
+
+model GoalContribution {
+  id        String   @id @default(cuid())
+  goalId    String
+  amount    Int      // paise (can be negative for withdrawals)
+  date      DateTime @default(now())
+  note      String?
+  createdAt DateTime @default(now())
+
+  goal FinancialGoal @relation(fields: [goalId], references: [id], onDelete: Cascade)
+
+  @@index([goalId])
+}
+
+model Tag {
+  id     String @id @default(cuid())
+  userId String
+  name   String
+  color  String @default("#64748b")
+
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions TransactionTag[]
+
+  @@unique([userId, name])
+  @@index([userId])
+}
+
+model TransactionTag {
+  transactionId String
+  tagId         String
+
+  transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  tag         Tag         @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([transactionId, tagId])
+  @@index([tagId])
+}
