@@ -1,5 +1,5 @@
 import {
-  ArrowLeftRight, Bookmark, CalendarClock, LayoutDashboard, Lightbulb, PieChart,
+  ArrowLeftRight, Bookmark, CalendarClock, LayoutDashboard, Lightbulb, LineChart, PieChart,
   Settings, Sparkles, Target, Upload, Wallet, type LucideIcon,
 } from "lucide-react";
 
@@ -16,6 +16,7 @@ export const PRIMARY_NAV: NavItem[] = [
   { href: "/recurring", label: "Recurring", icon: CalendarClock },
   { href: "/goals", label: "Goals", icon: Target },
   { href: "/insights", label: "Insights", icon: Lightbulb },
+  { href: "/trends", label: "Trends", icon: LineChart },
   { href: "/reports", label: "Reports", icon: Sparkles },
 ];
 

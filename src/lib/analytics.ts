@@ -50,6 +50,8 @@ export interface MonthlyAnalytics {
     savings: number | null;
   };
   categories: CategorySpendRow[];
+  /** Per-category net this month vs last, biggest absolute change first. */
+  categoryComparison: { categoryId: string | null; name: string; color: string; current: number; previous: number; delta: number }[];
   daily: { date: string; expense: number; income: number; count: number }[];
   largestExpense: { description: string; amount: number; date: Date; categoryName: string | null } | null;
   topCategory: { name: string; net: number } | null;
@@ -127,6 +129,27 @@ export async function getMonthlyAnalytics(
 
   const topCategory = categoryRows[0] ? { name: categoryRows[0].name, net: categoryRows[0].net } : null;
 
+  // This-month vs last-month net per category, biggest absolute swing first.
+  const currNet = new Map(categoryTotals(monthTxns).map((c) => [c.categoryId, c.net]));
+  const prevNet = new Map(prevCategoryTotals.map((c) => [c.categoryId, c.net]));
+  const categoryComparison = [...new Set([...currNet.keys(), ...prevNet.keys()])]
+    .map((id) => {
+      const meta = id ? categories.get(id) : null;
+      const current = currNet.get(id) ?? 0;
+      const previous = prevNet.get(id) ?? 0;
+      return {
+        categoryId: id,
+        name: meta?.name ?? "Uncategorized",
+        color: meta?.color ?? "#94a3b8",
+        current,
+        previous,
+        delta: current - previous,
+      };
+    })
+    .filter((c) => c.current !== 0 || c.previous !== 0)
+    .sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta))
+    .slice(0, 8);
+
   // Budget lines.
   const spentByCategory = new Map(categoryTotals(monthTxns).map((c) => [c.categoryId, c.net]));
   const lines: BudgetLine[] = budget.categories.map((bc) => {
@@ -189,6 +212,7 @@ export async function getMonthlyAnalytics(
           : null,
     },
     categories: categoryRows,
+    categoryComparison,
     daily: dailySeries(monthTxns, range.start, range.end),
     largestExpense,
     topCategory,
