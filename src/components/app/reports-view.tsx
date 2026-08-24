@@ -62,8 +62,12 @@ export function ReportsView({
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between print:hidden">
-        <div className="w-full overflow-x-auto pb-1 sm:w-auto sm:pb-0 no-scrollbar">
+        <div className="relative w-full sm:w-auto">
           <Segmented value={report} onChange={setReport} options={REPORT_OPTIONS} size="sm" className="w-full sm:w-auto" />
+          {/* Fade hint that more tabs sit off-screen — the scrollbar itself is
+              hidden, so without this the last tab reads as clipped/broken
+              rather than scrollable. */}
+          <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-surface to-transparent sm:hidden" aria-hidden />
         </div>
         <div className="flex items-center gap-2">
           <a

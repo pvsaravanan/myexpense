@@ -1,13 +1,12 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import useSWR from "swr";
-import { Download, Filter, Search, X } from "lucide-react";
+import { Filter, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/field";
 import { EmptyState, Skeleton } from "@/components/ui/misc";
 import { Money } from "@/components/money";
 import { TransactionRow } from "./transaction-row";
-import { ExportModal } from "./export-modal";
 import { useAppData } from "./app-data";
 import { swrFetcher } from "@/lib/http";
 import { toPaise } from "@/lib/money";
@@ -46,7 +45,6 @@ export function TransactionsView({
   const [filters, setFilters] = useState<Filters>(EMPTY);
   const [debouncedQ, setDebouncedQ] = useState("");
   const [showFilters, setShowFilters] = useState(false);
-  const [showExport, setShowExport] = useState(false);
   const [take, setTake] = useState(50);
 
   useEffect(() => {
@@ -133,9 +131,6 @@ export function TransactionsView({
           <Filter className="h-4 w-4" />
           Filters
           {activeChips.length > 0 && <span className="ml-1 rounded-none bg-brand px-1.5 text-2xs text-brand-fg">{activeChips.length}</span>}
-        </Button>
-        <Button variant="outline" onClick={() => setShowExport(true)}>
-          <Download className="h-4 w-4" />Export
         </Button>
       </div>
 
@@ -241,12 +236,6 @@ export function TransactionsView({
           )}
         </div>
       )}
-
-      <ExportModal
-        open={showExport}
-        onClose={() => setShowExport(false)}
-        initial={filters}
-      />
     </div>
   );
 }
