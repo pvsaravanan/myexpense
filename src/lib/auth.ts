@@ -16,6 +16,7 @@ export interface SessionUser {
   id: string;
   email: string;
   name: string;
+  avatarUrl: string | null;
 }
 
 /** The identity fields we need from a verified auth token. */
@@ -47,7 +48,7 @@ function identityFromClaims(claims: JwtPayload): AuthIdentity {
 async function resolveProfile({ authId, email, name }: AuthIdentity): Promise<SessionUser> {
   const byAuthId = await prisma.user.findUnique({
     where: { authId },
-    select: { id: true, email: true, name: true },
+    select: { id: true, email: true, name: true, avatarUrl: true },
   });
   if (byAuthId) return byAuthId;
 
@@ -57,7 +58,7 @@ async function resolveProfile({ authId, email, name }: AuthIdentity): Promise<Se
       return prisma.user.update({
         where: { id: byEmail.id },
         data: { authId },
-        select: { id: true, email: true, name: true },
+        select: { id: true, email: true, name: true, avatarUrl: true },
       });
     }
   }
@@ -124,7 +125,7 @@ export async function provisionUserProfile(input: {
   return prisma.$transaction(async (db) => {
     const user = await db.user.create({
       data: { authId: input.authId, email: input.email, name: input.name.trim() || "there" },
-      select: { id: true, email: true, name: true },
+      select: { id: true, email: true, name: true, avatarUrl: true },
     });
 
     await db.category.createMany({

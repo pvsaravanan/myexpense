@@ -5,7 +5,7 @@ import { useSWRConfig } from "swr";
 import type { AccountDTO, CategoryDTO, PreferenceDTO, TagDTO } from "@/lib/types";
 
 export interface AppData {
-  user: { id: string; name: string; email: string };
+  user: { id: string; name: string; email: string; avatarUrl: string | null };
   accounts: AccountDTO[];
   categories: CategoryDTO[];
   tags: TagDTO[];

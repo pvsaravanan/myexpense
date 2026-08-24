@@ -31,6 +31,8 @@ model User {
   // Links this profile row to the Supabase Auth user (auth.users.id, a UUID).
   // Supabase owns identity; this table stays the FK anchor for all app data.
   authId       String?  @unique
+  // Public URL of the user's uploaded profile photo (Supabase Storage), or null.
+  avatarUrl    String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronDown, ChevronUp, Download, LogOut, Upload } from "lucide-react";
@@ -12,6 +12,7 @@ import { ThemeToggle } from "@/components/app/theme-toggle";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Select } from "@/components/ui/field";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/toast";
 
 interface WidgetItem {
@@ -46,6 +47,46 @@ export function SettingsView() {
   // Resync if the saved name changes underneath us (e.g. after a refresh).
   useEffect(() => setName(user.name), [user.name]);
   const nameDirty = name.trim().length > 0 && name.trim() !== user.name;
+
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const initials = user.name.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase();
+
+  async function handleAvatarSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // let the same file be picked again after a remove
+    if (!file) return;
+    setUploadingAvatar(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/user/avatar", { method: "POST", body: fd });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? "Upload failed");
+      }
+      success("Photo updated");
+      refresh();
+    } catch (e2) {
+      error(e2 instanceof Error ? e2.message : "Could not upload photo");
+    } finally {
+      setUploadingAvatar(false);
+    }
+  }
+
+  async function handleRemoveAvatar() {
+    setUploadingAvatar(true);
+    try {
+      const res = await fetch("/api/user/avatar", { method: "DELETE" });
+      if (!res.ok) throw new Error("Remove failed");
+      success("Photo removed");
+      refresh();
+    } catch {
+      error("Could not remove photo");
+    } finally {
+      setUploadingAvatar(false);
+    }
+  }
 
   const [widgets, setWidgets] = useState<WidgetItem[]>(() =>
     buildWidgetItems(preference.dashboardWidgets),
@@ -141,6 +182,33 @@ export function SettingsView() {
       <Card>
         <CardHeader title="Profile" subtitle="Your account details." />
         <CardBody className="flex flex-col gap-4">
+          <div className="flex items-center gap-4">
+            {user.avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={user.avatarUrl} alt="" className="h-16 w-16 shrink-0 rounded-none border border-border object-cover" />
+            ) : (
+              <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-none border border-border text-xl font-bold text-brand">
+                {initials || "U"}
+              </span>
+            )}
+            <div className="flex flex-wrap gap-2">
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                className="hidden"
+                onChange={handleAvatarSelected}
+              />
+              <Button variant="secondary" onClick={() => fileRef.current?.click()} loading={uploadingAvatar}>
+                {user.avatarUrl ? "Change photo" : "Upload photo"}
+              </Button>
+              {user.avatarUrl && (
+                <Button variant="ghost" onClick={handleRemoveAvatar} disabled={uploadingAvatar}>
+                  Remove
+                </Button>
+              )}
+            </div>
+          </div>
           <Field label="Name" htmlFor="profile-name">
             <div className="flex gap-2">
               <Input
@@ -253,24 +321,11 @@ export function SettingsView() {
                   </button>
                 </div>
                 <span className="flex-1 text-sm text-fg">{WIDGET_LABELS[w.key]}</span>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={w.enabled}
-                  aria-label={WIDGET_LABELS[w.key]}
-                  onClick={() => toggleWidget(w.key)}
-                  className={cn(
-                    "relative inline-flex h-5 w-9 shrink-0 items-center rounded-none transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
-                    w.enabled ? "bg-brand" : "bg-border",
-                  )}
-                >
-                  <span
-                    className={cn(
-                      "inline-block h-4 w-4 transform rounded-none bg-white shadow-sm transition-transform",
-                      w.enabled ? "translate-x-4" : "translate-x-0.5",
-                    )}
-                  />
-                </button>
+                <Switch
+                  checked={w.enabled}
+                  onChange={() => toggleWidget(w.key)}
+                  label={WIDGET_LABELS[w.key]}
+                />
               </li>
             ))}
           </ul>

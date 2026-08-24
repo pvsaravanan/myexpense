@@ -46,9 +46,14 @@ export function UserMenu() {
         aria-haspopup="menu"
         aria-expanded={open}
       >
-        <span className="flex h-7 w-7 items-center justify-center rounded-none text-sm font-bold text-brand">
-          {initials || "U"}
-        </span>
+        {user.avatarUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={user.avatarUrl} alt="" className="h-7 w-7 shrink-0 rounded-none border border-border object-cover" />
+        ) : (
+          <span className="flex h-7 w-7 items-center justify-center rounded-none text-sm font-bold text-brand">
+            {initials || "U"}
+          </span>
+        )}
         <span className="hidden max-w-[120px] truncate text-sm font-medium text-fg sm:block">{user.name}</span>
       </button>
       {open && (
