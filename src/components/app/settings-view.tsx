@@ -11,7 +11,7 @@ import { useAppData } from "@/components/app/app-data";
 import { ThemeToggle } from "@/components/app/theme-toggle";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Field, Select } from "@/components/ui/field";
+import { Field, Input, Select } from "@/components/ui/field";
 import { useToast } from "@/components/ui/toast";
 
 interface WidgetItem {
@@ -40,6 +40,12 @@ export function SettingsView() {
 
   const [signingOut, setSigningOut] = useState(false);
   const [savingAccount, setSavingAccount] = useState(false);
+
+  const [name, setName] = useState(user.name);
+  const [savingName, setSavingName] = useState(false);
+  // Resync if the saved name changes underneath us (e.g. after a refresh).
+  useEffect(() => setName(user.name), [user.name]);
+  const nameDirty = name.trim().length > 0 && name.trim() !== user.name;
 
   const [widgets, setWidgets] = useState<WidgetItem[]>(() =>
     buildWidgetItems(preference.dashboardWidgets),
@@ -74,6 +80,19 @@ export function SettingsView() {
     }
     router.push("/login");
     router.refresh();
+  }
+
+  async function handleSaveName() {
+    setSavingName(true);
+    try {
+      await apiPatch("/api/user", { name: name.trim() });
+      success("Name updated");
+      refresh();
+    } catch (e) {
+      error(e instanceof ApiError ? e.message : "Could not update name");
+    } finally {
+      setSavingName(false);
+    }
   }
 
   async function handleDefaultAccount(value: string) {
@@ -121,20 +140,38 @@ export function SettingsView() {
       {/* Profile */}
       <Card>
         <CardHeader title="Profile" subtitle="Your account details." />
-        <CardBody className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="min-w-0">
-            <p className="truncate text-sm font-medium text-fg">{user.name}</p>
-            <p className="truncate text-sm text-muted">{user.email}</p>
+        <CardBody className="flex flex-col gap-4">
+          <Field label="Name" htmlFor="profile-name">
+            <div className="flex gap-2">
+              <Input
+                id="profile-name"
+                value={name}
+                maxLength={80}
+                onChange={(e) => setName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && nameDirty && !savingName) handleSaveName();
+                }}
+              />
+              <Button onClick={handleSaveName} loading={savingName} disabled={!nameDirty} className="shrink-0">
+                Save
+              </Button>
+            </div>
+          </Field>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div className="min-w-0">
+              <p className="text-label-md uppercase text-muted">Email</p>
+              <p className="mt-1 truncate text-sm text-fg">{user.email}</p>
+            </div>
+            <Button
+              variant="outline"
+              onClick={handleSignOut}
+              loading={signingOut}
+              className="shrink-0"
+            >
+              <LogOut className="h-4 w-4" aria-hidden />
+              Sign out
+            </Button>
           </div>
-          <Button
-            variant="outline"
-            onClick={handleSignOut}
-            loading={signingOut}
-            className="shrink-0"
-          >
-            <LogOut className="h-4 w-4" aria-hidden />
-            Sign out
-          </Button>
         </CardBody>
       </Card>
 
