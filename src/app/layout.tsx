@@ -5,6 +5,15 @@ import { Providers } from "@/components/providers";
 import { themeScript } from "@/components/theme-provider";
 
 /**
+ * Run the server functions in Singapore, next to the Supabase database
+ * (ap-southeast-1). Each page render makes several server->DB round trips but
+ * only one browser->server trip, so co-locating compute with the DB removes the
+ * cross-region latency that dominated page loads. Set at the root so it is
+ * inherited by every page and API route handler. Only affects Vercel.
+ */
+export const preferredRegion = "sin1";
+
+/**
  * Roboto Mono is the whole system typeface. Self-hosted by next/font at build
  * time — no external request at runtime. Variable weight covers 400–800.
  */
