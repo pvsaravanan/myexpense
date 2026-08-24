@@ -13,6 +13,7 @@ import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Select } from "@/components/ui/field";
 import { Switch } from "@/components/ui/switch";
+import { AvatarCropModal } from "./avatar-crop-modal";
 import { useToast } from "@/components/ui/toast";
 
 interface WidgetItem {
@@ -50,22 +51,40 @@ export function SettingsView() {
 
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
   const initials = user.name.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase();
 
-  async function handleAvatarSelected(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleAvatarSelected(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    e.target.value = ""; // let the same file be picked again after a remove
+    e.target.value = ""; // let the same file be picked again later
     if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      error("Please choose an image file");
+      return;
+    }
+    // Open the cropper; the actual upload happens once the user confirms.
+    setCropSrc(URL.createObjectURL(file));
+  }
+
+  function closeCrop() {
+    setCropSrc((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return null;
+    });
+  }
+
+  async function handleCropConfirm(blob: Blob) {
     setUploadingAvatar(true);
     try {
       const fd = new FormData();
-      fd.append("file", file);
+      fd.append("file", blob, "avatar.jpg");
       const res = await fetch("/api/user/avatar", { method: "POST", body: fd });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         throw new Error(body.error ?? "Upload failed");
       }
       success("Photo updated");
+      closeCrop();
       refresh();
     } catch (e2) {
       error(e2 instanceof Error ? e2.message : "Could not upload photo");
@@ -363,6 +382,14 @@ export function SettingsView() {
           </div>
         </CardBody>
       </Card>
+
+      <AvatarCropModal
+        src={cropSrc}
+        open={cropSrc !== null}
+        busy={uploadingAvatar}
+        onCancel={closeCrop}
+        onConfirm={handleCropConfirm}
+      />
     </div>
   );
 }
