@@ -58,8 +58,8 @@ export default async function InsightsPage() {
             const t = toneClasses(ins.tone);
             return (
               <div key={ins.id} className="flex items-start gap-3 rounded-none border border-border bg-surface p-4 shadow-card">
-                <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-none ${t.bg}`}>
-                  <Icon name={ins.icon} size={18} className={t.text} />
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-none">
+                  <Icon name={ins.icon} size={22} className={t.text} />
                 </div>
                 <p className="pt-1 text-sm text-fg">{ins.text}</p>
               </div>

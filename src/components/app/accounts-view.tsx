@@ -169,10 +169,10 @@ function AccountCard({
     <li className={cn("group relative rounded-none border border-border bg-surface p-4 shadow-card", account.isArchived && "opacity-70")}>
       <div className="flex items-start gap-3">
         <span
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-none text-white"
-          style={{ backgroundColor: account.color }}
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-none"
+          style={{ color: account.color }}
         >
-          <Icon name={account.icon} size={18} />
+          <Icon name={account.icon} size={22} />
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">

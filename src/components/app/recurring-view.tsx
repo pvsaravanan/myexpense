@@ -285,15 +285,12 @@ function RecurringRow({
     <div className={cn("relative flex items-center gap-3 px-4 py-3 transition-opacity", busy && "opacity-50")}>
       <div
         className="flex h-9 w-9 shrink-0 items-center justify-center rounded-none"
-        style={{
-          backgroundColor: isTransfer ? "hsl(var(--surface-2))" : `${cat?.color ?? "#94a3b8"}1f`,
-          color: cat?.color ?? "#94a3b8",
-        }}
+        style={{ color: cat?.color ?? "#94a3b8" }}
       >
         {isTransfer ? (
-          <ArrowLeftRight className="h-4 w-4 text-muted" />
+          <ArrowLeftRight className="h-5 w-5 text-muted" />
         ) : (
-          <Icon name={cat?.icon ?? "circle-dot"} size={16} />
+          <Icon name={cat?.icon ?? "circle-dot"} size={20} />
         )}
       </div>
 

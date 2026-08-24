@@ -103,14 +103,11 @@ export function TransactionRow({
     >
       <button
         onClick={() => openEdit(txn)}
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-none border border-border/40"
-        style={{
-          backgroundColor: `${badgeColor}18`,
-          color: badgeColor,
-        }}
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-none"
+        style={{ color: badgeColor }}
         aria-label="Edit transaction"
       >
-        <Icon name={iconName} size={16} strokeWidth={2.2} />
+        <Icon name={iconName} size={20} strokeWidth={2.2} />
       </button>
 
       <button onClick={() => openEdit(txn)} className="min-w-0 flex-1 text-left">

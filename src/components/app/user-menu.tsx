@@ -46,7 +46,7 @@ export function UserMenu() {
         aria-haspopup="menu"
         aria-expanded={open}
       >
-        <span className="flex h-7 w-7 items-center justify-center rounded-none bg-brand text-xs font-semibold text-brand-fg">
+        <span className="flex h-7 w-7 items-center justify-center rounded-none text-sm font-bold text-brand">
           {initials || "U"}
         </span>
         <span className="hidden max-w-[120px] truncate text-sm font-medium text-fg sm:block">{user.name}</span>

@@ -10,9 +10,9 @@ export function Logo({ className, showText = true }: { className?: string; showT
     <span className={cn("inline-flex items-center gap-2", className)}>
       <span
         aria-hidden
-        className="flex h-7 w-7 items-center justify-center rounded-none border border-border bg-brand text-brand-fg"
+        className="flex h-7 w-7 items-center justify-center rounded-none text-brand"
       >
-        <svg viewBox="0 0 12 12" className="h-[15px] w-[15px]" fill="currentColor" shapeRendering="crispEdges">
+        <svg viewBox="0 0 12 12" className="h-[22px] w-[22px]" fill="currentColor" shapeRendering="crispEdges">
           <rect x="1" y="7" width="2" height="4" />
           <rect x="4" y="5" width="2" height="6" />
           <rect x="7" y="2" width="2" height="9" />

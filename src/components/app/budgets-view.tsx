@@ -185,9 +185,9 @@ function CategoryRow({ line }: { line: BudgetLineData }) {
       <div className="flex items-center gap-3">
         <span
           className="flex h-8 w-8 shrink-0 items-center justify-center rounded-none"
-          style={{ backgroundColor: `${line.color}1a`, color: line.color }}
+          style={{ color: line.color }}
         >
-          <Icon name={line.icon} size={15} />
+          <Icon name={line.icon} size={19} />
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
@@ -340,9 +340,9 @@ function EditBudgetModal({
               <div key={c.id} className="flex items-center gap-3 px-3 py-2.5">
                 <span
                   className="flex h-7 w-7 shrink-0 items-center justify-center rounded-none"
-                  style={{ backgroundColor: `${c.color}1a`, color: c.color }}
+                  style={{ color: c.color }}
                 >
-                  <Icon name={c.icon} size={14} />
+                  <Icon name={c.icon} size={18} />
                 </span>
                 <span className="min-w-0 flex-1 truncate text-sm text-fg">{c.name}</span>
                 <Input

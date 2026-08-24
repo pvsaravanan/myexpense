@@ -189,10 +189,10 @@ function CategoryRow({
   return (
     <li className={cn("group flex items-center gap-3 px-4 py-3", !category.isActive && "opacity-70")}>
       <span
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-none text-white"
-        style={{ backgroundColor: category.color }}
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-none"
+        style={{ color: category.color }}
       >
-        <Icon name={category.icon} size={16} />
+        <Icon name={category.icon} size={20} />
       </span>
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
