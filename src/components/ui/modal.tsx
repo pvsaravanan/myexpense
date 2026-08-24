@@ -33,6 +33,7 @@ export function Modal({
    */
   busy?: boolean;
 }) {
+  const overlayRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -89,6 +90,21 @@ export function Modal({
     body.style.position = "fixed";
     body.style.top = `-${scrollY}px`;
     body.style.width = "100%";
+
+    // Belt-and-suspenders for iOS: even with the body pinned, Safari will still
+    // rubber-band a fixed overlay under a finger drag. Swallow touchmove on the
+    // overlay unless the finger is inside the scroll region AND it can actually
+    // scroll — so the sheet, backdrop and page stay put, but the form's own
+    // content still scrolls.
+    const onTouchMove = (e: TouchEvent) => {
+      const scroller = contentRef.current;
+      if (scroller && scroller.contains(e.target as Node) && scroller.scrollHeight > scroller.clientHeight) {
+        return;
+      }
+      e.preventDefault();
+    };
+    const overlay = overlayRef.current;
+    overlay?.addEventListener("touchmove", onTouchMove, { passive: false });
     // Focus the first field inside the content, NOT the header's close (X)
     // button — otherwise pressing Enter right after opening closes the dialog.
     // For dialogs whose content has no field (e.g. confirm prompts, whose
@@ -105,6 +121,7 @@ export function Modal({
     }, 40);
     return () => {
       document.removeEventListener("keydown", onKey);
+      overlay?.removeEventListener("touchmove", onTouchMove);
       body.style.overflow = prev.overflow;
       body.style.position = prev.position;
       body.style.top = prev.top;
@@ -121,7 +138,8 @@ export function Modal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center sm:items-center"
+      ref={overlayRef}
+      className="fixed inset-0 z-50 flex items-end justify-center overscroll-none sm:items-center"
       role="dialog"
       aria-modal="true"
       aria-label={title}

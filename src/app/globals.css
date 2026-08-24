@@ -194,12 +194,22 @@ input[type="number"] {
   appearance: textfield;
 }
 
-/* iOS Safari centers the value of a date input via this pseudo-element, so it
-   sat oddly compared with the left-aligned selects above it. Left-align it and
-   let the value fill the field so it reads like every other field. */
+/* Date inputs on iOS Safari use a content-based intrinsic width and ignore
+   `width: 100%` / box-sizing, so the field overflowed the modal (and let the
+   whole sheet pan sideways). Strip the native appearance and let it shrink. */
+input[type="date"] {
+  -webkit-appearance: none;
+  appearance: none;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 3rem;
+}
+/* iOS centers the value via this pseudo-element; left-align it so the date
+   reads like every other field, and stop it from forcing extra width. */
 input[type="date"]::-webkit-date-and-time-value {
   text-align: left;
+  min-width: 0;
 }
-input[type="date"] {
-  min-height: 3rem;
+input[type="date"]::-webkit-calendar-picker-indicator {
+  margin-inline-start: auto;
 }
