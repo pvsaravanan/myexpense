@@ -72,8 +72,23 @@ export function Modal({
       }
     };
     document.addEventListener("keydown", onKey);
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    // Lock background scroll. iOS Safari ignores `overflow: hidden` on <body>
+    // for touch, so the page (and this fixed overlay) rubber-bands under a
+    // finger drag. Pinning the body with `position: fixed` at the current
+    // scroll offset is the reliable cross-browser lock; we restore it — and the
+    // scroll position — on close.
+    const body = document.body;
+    const scrollY = window.scrollY;
+    const prev = {
+      overflow: body.style.overflow,
+      position: body.style.position,
+      top: body.style.top,
+      width: body.style.width,
+    };
+    body.style.overflow = "hidden";
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.width = "100%";
     // Focus the first field inside the content, NOT the header's close (X)
     // button — otherwise pressing Enter right after opening closes the dialog.
     // For dialogs whose content has no field (e.g. confirm prompts, whose
@@ -90,7 +105,12 @@ export function Modal({
     }, 40);
     return () => {
       document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = prev;
+      body.style.overflow = prev.overflow;
+      body.style.position = prev.position;
+      body.style.top = prev.top;
+      body.style.width = prev.width;
+      // Restore the pre-lock scroll position (pinning reset it to the top).
+      window.scrollTo(0, scrollY);
       clearTimeout(t);
     };
   }, [open, onClose, busy]);

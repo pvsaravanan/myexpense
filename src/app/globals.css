@@ -193,3 +193,13 @@ input[type="number"] {
   -moz-appearance: textfield;
   appearance: textfield;
 }
+
+/* iOS Safari centers the value of a date input via this pseudo-element, so it
+   sat oddly compared with the left-aligned selects above it. Left-align it and
+   let the value fill the field so it reads like every other field. */
+input[type="date"]::-webkit-date-and-time-value {
+  text-align: left;
+}
+input[type="date"] {
+  min-height: 3rem;
+}
