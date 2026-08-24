@@ -1,7 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { redirect } from "next/navigation";
-import type { User as SupabaseUser } from "@supabase/supabase-js";
+import type { JwtPayload } from "@supabase/supabase-js";
 import { prisma } from "./db";
 import { createClient } from "./supabase/server";
 import { DEFAULT_CATEGORIES, DEFAULT_DASHBOARD_WIDGETS } from "./constants";
@@ -18,6 +18,24 @@ export interface SessionUser {
   name: string;
 }
 
+/** The identity fields we need from a verified auth token. */
+interface AuthIdentity {
+  authId: string;
+  email: string;
+  name: string;
+}
+
+/** Normalize verified JWT claims into the identity fields the app cares about. */
+function identityFromClaims(claims: JwtPayload): AuthIdentity {
+  const email = (typeof claims.email === "string" ? claims.email : "").trim().toLowerCase();
+  const meta = (claims.user_metadata ?? {}) as Record<string, unknown>;
+  const name =
+    (typeof meta.name === "string" ? meta.name : undefined) ??
+    (typeof meta.full_name === "string" ? meta.full_name : undefined) ??
+    (email ? email.split("@")[0] : "there");
+  return { authId: claims.sub, email, name };
+}
+
 /**
  * Resolve (and lazily provision) the local profile for a Supabase auth user.
  * - matches by authId first;
@@ -26,43 +44,46 @@ export interface SessionUser {
  * - otherwise creates a fresh profile with starter data (first email/Google
  *   sign-in).
  */
-async function resolveProfile(authUser: SupabaseUser): Promise<SessionUser> {
+async function resolveProfile({ authId, email, name }: AuthIdentity): Promise<SessionUser> {
   const byAuthId = await prisma.user.findUnique({
-    where: { authId: authUser.id },
+    where: { authId },
     select: { id: true, email: true, name: true },
   });
   if (byAuthId) return byAuthId;
 
-  const email = (authUser.email ?? "").trim().toLowerCase();
   if (email) {
     const byEmail = await prisma.user.findUnique({ where: { email } });
     if (byEmail) {
       return prisma.user.update({
         where: { id: byEmail.id },
-        data: { authId: authUser.id },
+        data: { authId },
         select: { id: true, email: true, name: true },
       });
     }
   }
 
-  const name =
-    (authUser.user_metadata?.name as string | undefined) ??
-    (authUser.user_metadata?.full_name as string | undefined) ??
-    (email ? email.split("@")[0] : "there");
-  return provisionUserProfile({ authId: authUser.id, email, name });
+  return provisionUserProfile({ authId, email, name });
 }
 
 /**
  * Resolve the current signed-in user, or null. Wrapped in React `cache()` so a
  * single render (layout + page + any server component) shares one lookup.
+ *
+ * Uses `getClaims()`, which verifies the access-token JWT against the project's
+ * signing key. With asymmetric signing keys enabled this is a local WebCrypto
+ * verification — no round trip to the Auth server on every render/handler,
+ * unlike `getUser()`. The authoritative, revocation-aware `getUser()` check
+ * still runs in middleware (`updateSession`) on every request, so a
+ * revoked/banned session is rejected at the edge; app queries are additionally
+ * scoped by userId. A forged or tampered token fails signature verification
+ * here and yields null.
  */
 export const getCurrentUser = cache(async (): Promise<SessionUser | null> => {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
-  return resolveProfile(user);
+  const { data, error } = await supabase.auth.getClaims();
+  const claims = data?.claims;
+  if (error || !claims?.sub) return null;
+  return resolveProfile(identityFromClaims(claims));
 });
 
 /** Require an authenticated user in API routes; throws a tagged error otherwise. */
