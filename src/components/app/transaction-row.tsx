@@ -48,6 +48,13 @@ export function TransactionRow({
     setBusy(true);
     setMenuOpen(false);
     try {
+      if (txn.splitGroupId) {
+        // Every part of a split expense is one logical purchase — delete them together.
+        await apiDelete(`/api/transactions/split/${txn.splitGroupId}`);
+        done();
+        toast.success("Split expense deleted");
+        return;
+      }
       await apiDelete(`/api/transactions/${txn.id}`);
       done();
       toast.success("Transaction deleted", {
@@ -116,6 +123,12 @@ export function TransactionRow({
           {txn.recurringId && (
             <span className="shrink-0 rounded bg-brand-soft px-1.5 py-0.5 text-2xs font-medium text-brand-hover">auto</span>
           )}
+          {txn.splitGroupId && (
+            <span className="shrink-0 rounded bg-surface-2 px-1.5 py-0.5 text-2xs font-medium text-muted">split</span>
+          )}
+          {txn.shares.length > 0 && (
+            <span className="shrink-0 rounded bg-brand-soft px-1.5 py-0.5 text-2xs font-medium text-brand-hover">shared</span>
+          )}
         </div>
         <p className="truncate text-xs text-muted">
           {meta.join(" · ")}
@@ -141,7 +154,9 @@ export function TransactionRow({
             <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
             <div className="absolute right-0 z-20 mt-1 w-40 rounded-none border border-border bg-surface p-1 shadow-pop animate-scale-in">
               <MenuItem icon={<Pencil className="h-4 w-4" />} onClick={() => { setMenuOpen(false); openEdit(txn); }}>Edit</MenuItem>
-              <MenuItem icon={<Copy className="h-4 w-4" />} onClick={onDuplicate}>Duplicate</MenuItem>
+              {!txn.splitGroupId && (
+                <MenuItem icon={<Copy className="h-4 w-4" />} onClick={onDuplicate}>Duplicate</MenuItem>
+              )}
               <MenuItem icon={<Trash2 className="h-4 w-4" />} onClick={onDelete} danger>Delete</MenuItem>
             </div>
           </>
