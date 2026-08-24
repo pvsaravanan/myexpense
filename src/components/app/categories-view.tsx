@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Field, Input, Select } from "@/components/ui/field";
 import { Badge, EmptyState } from "@/components/ui/misc";
 import { Modal } from "@/components/ui/modal";
+import { Switch } from "@/components/ui/switch";
 import { Money } from "@/components/money";
 import { Icon } from "@/components/icon";
 import { useToast } from "@/components/ui/toast";
@@ -375,23 +376,7 @@ function CategoryForm({
           Active
           <span className="mt-0.5 block text-xs text-muted">Inactive categories are hidden when adding transactions.</span>
         </span>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={isActive}
-          onClick={() => setIsActive((v) => !v)}
-          className={cn(
-            "relative inline-flex h-6 w-11 shrink-0 items-center rounded-none transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
-            isActive ? "bg-brand" : "bg-surface-2 border border-border",
-          )}
-        >
-          <span
-            className={cn(
-              "inline-block h-5 w-5 transform rounded-none bg-white shadow transition-transform",
-              isActive ? "translate-x-5" : "translate-x-0.5",
-            )}
-          />
-        </button>
+        <Switch checked={isActive} onChange={setIsActive} label="Active" />
       </label>
 
       <div className="flex gap-2 pt-1">
