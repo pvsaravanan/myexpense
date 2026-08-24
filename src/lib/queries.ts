@@ -74,7 +74,7 @@ export async function loadTransactions(
 ): Promise<TransactionDTO[]> {
   const rows = await prisma.transaction.findMany({
     where: { userId, deletedAt: null },
-    include: { tags: { include: { tag: true } } },
+    include: { tags: { include: { tag: true } }, shares: { include: { contact: true } } },
     orderBy: [{ date: "desc" }, { createdAt: "desc" }],
     take: opts.take,
     skip: opts.skip,

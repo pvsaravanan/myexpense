@@ -55,6 +55,13 @@ export const resetSchema = z.object({
   password: z.string().min(8, "Use at least 8 characters").max(200),
 });
 
+/** A contact's share of a transaction's cost — see ExpenseShare in the schema. */
+export const shareInputSchema = z.object({
+  contactId: z.string().min(1),
+  amount: positivePaise,
+});
+export type ShareInput = z.infer<typeof shareInputSchema>;
+
 export const transactionSchema = z
   .object({
     type: z.enum(TRANSACTION_TYPES),
@@ -68,6 +75,9 @@ export const transactionSchema = z
     paymentMethod: z.string().trim().max(60).optional().nullable(),
     notes: z.string().trim().max(1000).optional().nullable(),
     tags: z.array(z.string().trim().min(1).max(40)).max(20).optional(),
+    // People this expense is shared with. Omit to leave existing shares
+    // untouched on an edit; send [] to clear them.
+    shares: z.array(shareInputSchema).max(20).optional(),
   })
   .refine((d) => d.type !== "transfer" || (d.transferAccountId && d.transferAccountId !== d.accountId), {
     message: "Transfers need a different destination account",
@@ -75,6 +85,49 @@ export const transactionSchema = z
   });
 
 export type TransactionInput = z.infer<typeof transactionSchema>;
+
+/** One category/account allocation within a split expense. */
+export const splitPartSchema = z.object({
+  amount: positivePaise,
+  categoryId: z.string().optional().nullable(),
+  accountId: z.string().min(1, "Account is required"),
+  description: z.string().trim().max(200).optional(),
+});
+
+/**
+ * A single logical expense divided into multiple real Transaction rows
+ * (one per part), sharing a splitGroupId — see the schema comment on
+ * Transaction.splitGroupId. Splitting is expense-only: it wouldn't have a
+ * clear meaning for income/transfer/refund.
+ */
+export const splitTransactionSchema = z.object({
+  description: z.string().trim().min(1, "Description is required").max(200),
+  merchant: z.string().trim().max(120).optional().nullable(),
+  date: isoDate,
+  paymentMethod: z.string().trim().max(60).optional().nullable(),
+  notes: z.string().trim().max(1000).optional().nullable(),
+  tags: z.array(z.string().trim().min(1).max(40)).max(20).optional(),
+  parts: z.array(splitPartSchema).min(2, "Add at least 2 splits").max(10, "Up to 10 splits"),
+  // Shares apply against the group's total (sum of all parts), not any
+  // single part — a friend's portion of the whole purchase doesn't care how
+  // you've broken it down by category or account.
+  shares: z.array(shareInputSchema).max(20).optional(),
+});
+
+export type SplitTransactionInput = z.infer<typeof splitTransactionSchema>;
+
+export const contactSchema = z.object({
+  name: z.string().trim().min(1, "Name is required").max(80),
+  color: z.string().regex(/^#[0-9a-fA-F]{6}$/).default("#64748b"),
+});
+
+/** A standalone ledger entry against a contact (not tied to a transaction). */
+export const standaloneShareSchema = z.object({
+  amount: positivePaise,
+  direction: z.enum(["owed_to_you", "you_owe"]),
+  description: z.string().trim().max(200).optional().nullable(),
+  date: isoDate.optional(),
+});
 
 export const accountSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(80),

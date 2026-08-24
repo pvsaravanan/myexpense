@@ -43,6 +43,7 @@ model User {
   recurring    RecurringTransaction[]
   goals        FinancialGoal[]
   tags         Tag[]
+  contacts     Contact[]
   preference   UserPreference?
 }
 
@@ -129,6 +130,12 @@ model Transaction {
   paymentMethod     String?   // upi | cash
   notes             String?
   recurringId       String?   // set when generated from a recurring rule
+  // Links sibling rows that together make up one logical "split expense" (the
+  // same purchase divided across categories and/or accounts). Each row is a
+  // normal, independent transaction — balances, budgets and category totals
+  // need no special-casing — this id just lets the UI bundle them for display
+  // and editing. Null for ordinary, unsplit transactions.
+  splitGroupId      String?
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
   deletedAt         DateTime? // soft delete
@@ -139,12 +146,16 @@ model Transaction {
   transferAccount Account?        @relation("TransferDestination", fields: [transferAccountId], references: [id])
   recurring       RecurringTransaction? @relation(fields: [recurringId], references: [id])
   tags            TransactionTag[]
+  // People this transaction (or, for a split group, this row specifically)
+  // is shared with — see ExpenseShare.
+  shares          ExpenseShare[]
 
   @@index([userId, date])
   @@index([userId, deletedAt])
   @@index([accountId])
   @@index([categoryId])
   @@index([type])
+  @@index([splitGroupId])
 }
 
 model Budget {
@@ -263,4 +274,54 @@ model TransactionTag {
 
   @@id([transactionId, tagId])
   @@index([tagId])
+}
+
+/** A person you split expenses with. No login of their own — a label + ledger. */
+model Contact {
+  id         String   @id @default(cuid())
+  userId     String
+  name       String
+  color      String   @default("#64748b")
+  isArchived Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  user   User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shares ExpenseShare[]
+
+  @@unique([userId, name])
+  @@index([userId])
+}
+
+/**
+ * One line in the shared-expense ledger between you and a contact.
+ *
+ * `direction`:
+ *   - "owed_to_you": you paid; the contact owes you their share. These are
+ *     usually attached to a Transaction you recorded (transactionId set), and
+ *     recording one never changes that transaction's amount — you still paid
+ *     the full amount — it only tracks what's owed back.
+ *   - "you_owe": the contact paid; you owe them your share. These are
+ *     standalone (transactionId null) with their own description/date, since
+ *     no transaction left your accounts.
+ *
+ * `settled` flips true once the debt is cleared — optionally alongside a real
+ * Income (they paid you) or Expense (you paid them) transaction.
+ */
+model ExpenseShare {
+  id            String    @id @default(cuid())
+  transactionId String?   // null for standalone "you owe" entries
+  contactId     String
+  amount        Int       // paise, this share
+  direction     String    @default("owed_to_you") // owed_to_you | you_owe
+  description   String?   // used when there is no linked transaction
+  date          DateTime  @default(now())
+  settled       Boolean   @default(false)
+  settledAt     DateTime?
+  createdAt     DateTime  @default(now())
+
+  transaction Transaction? @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  contact     Contact      @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@index([transactionId])
+  @@index([contactId])
 }

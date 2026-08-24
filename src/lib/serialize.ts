@@ -2,6 +2,8 @@
 import type {
   Account,
   Category,
+  Contact,
+  ExpenseShare,
   FinancialGoal,
   GoalContribution,
   RecurringTransaction,
@@ -13,6 +15,7 @@ import { toISODate } from "./dates";
 import type {
   AccountDTO,
   CategoryDTO,
+  ContactDTO,
   GoalDTO,
   RecurringDTO,
   TagDTO,
@@ -60,7 +63,22 @@ export function serializeTag(t: Tag): TagDTO {
   return { id: t.id, name: t.name, color: t.color };
 }
 
-type TxnWithTags = Transaction & { tags?: (TransactionTag & { tag: Tag })[] };
+export function serializeContact(c: Contact, owedToYou: number, youOwe: number): ContactDTO {
+  return {
+    id: c.id,
+    name: c.name,
+    color: c.color,
+    isArchived: c.isArchived,
+    owedToYou,
+    youOwe,
+    net: owedToYou - youOwe,
+  };
+}
+
+type TxnWithTags = Transaction & {
+  tags?: (TransactionTag & { tag: Tag })[];
+  shares?: (ExpenseShare & { contact: Contact })[];
+};
 
 export function serializeTransaction(t: TxnWithTags): TransactionDTO {
   return {
@@ -77,6 +95,17 @@ export function serializeTransaction(t: TxnWithTags): TransactionDTO {
     notes: t.notes,
     recurringId: t.recurringId,
     tags: t.tags?.map((tt) => tt.tag.name) ?? [],
+    splitGroupId: t.splitGroupId,
+    shares:
+      t.shares?.map((s) => ({
+        id: s.id,
+        contactId: s.contactId,
+        contactName: s.contact.name,
+        amount: s.amount,
+        direction: s.direction as "owed_to_you" | "you_owe",
+        settled: s.settled,
+        settledAt: s.settledAt ? toISODate(s.settledAt) : null,
+      })) ?? [],
   };
 }
 

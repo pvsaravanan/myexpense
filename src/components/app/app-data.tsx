@@ -2,13 +2,14 @@
 import { createContext, useCallback, useContext } from "react";
 import { useRouter } from "next/navigation";
 import { useSWRConfig } from "swr";
-import type { AccountDTO, CategoryDTO, PreferenceDTO, TagDTO } from "@/lib/types";
+import type { AccountDTO, CategoryDTO, ContactDTO, PreferenceDTO, TagDTO } from "@/lib/types";
 
 export interface AppData {
   user: { id: string; name: string; email: string; avatarUrl: string | null };
   accounts: AccountDTO[];
   categories: CategoryDTO[];
   tags: TagDTO[];
+  contacts: ContactDTO[];
   preference: PreferenceDTO;
   /** Re-fetch server components and revalidate client SWR data in real time. */
   refresh: () => void;

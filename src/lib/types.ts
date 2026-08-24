@@ -56,6 +56,34 @@ export interface TransactionDTO {
   notes: string | null;
   recurringId: string | null;
   tags: string[];
+  // Non-null when this row is one part of a multi-category/multi-account
+  // split expense; every row sharing this id was one logical purchase.
+  splitGroupId: string | null;
+  // People this expense is shared with (see ExpenseShare). Empty for most
+  // transactions.
+  shares: ShareDTO[];
+}
+
+export type ShareDirection = "owed_to_you" | "you_owe";
+
+export interface ShareDTO {
+  id: string;
+  contactId: string;
+  contactName: string;
+  amount: number; // paise, this contact's share
+  direction: ShareDirection;
+  settled: boolean;
+  settledAt: string | null;
+}
+
+export interface ContactDTO {
+  id: string;
+  name: string;
+  color: string;
+  isArchived: boolean;
+  owedToYou: number; // unsettled amount the contact owes you (paise)
+  youOwe: number; // unsettled amount you owe the contact (paise)
+  net: number; // owedToYou - youOwe (positive: they owe you)
 }
 
 export interface RecurringDTO {
