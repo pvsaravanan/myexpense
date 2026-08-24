@@ -27,9 +27,12 @@ export function AppDataProvider({
   const { mutate } = useSWRConfig();
 
   const refresh = useCallback(() => {
-    // 1. Instantly revalidate all active SWR hooks (transactions, summaries, etc.)
-    mutate(() => true, undefined, { revalidate: true });
-    // 2. Re-render RSC tree for current page route
+    // 1. Revalidate all active SWR hooks (transactions, summaries, etc.) IN
+    //    PLACE. Passing `undefined` as the data cleared every cache entry first,
+    //    which threw away any optimistic update and could flash a loading state;
+    //    a matcher-only mutate re-fetches while keeping the current values shown.
+    mutate(() => true);
+    // 2. Re-render the RSC tree for the current route (server-rendered tiles).
     router.refresh();
   }, [mutate, router]);
 

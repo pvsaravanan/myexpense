@@ -23,16 +23,18 @@ async function assertOwnership(userId: string, input: TransactionInput | Omit<Tr
 /** Find-or-create tags by name for a user and return their ids. */
 async function resolveTagIds(userId: string, names: string[]): Promise<string[]> {
   const unique = [...new Set(names.map((n) => n.trim()).filter(Boolean))];
-  const ids: string[] = [];
-  for (const name of unique) {
-    const tag = await prisma.tag.upsert({
-      where: { userId_name: { userId, name } },
-      update: {},
-      create: { userId, name },
-    });
-    ids.push(tag.id);
-  }
-  return ids;
+  if (unique.length === 0) return [];
+  // One insert for the missing tags, one read to fetch them all — instead of a
+  // sequential upsert per tag, which was N round-trips against the hosted DB.
+  await prisma.tag.createMany({
+    data: unique.map((name) => ({ userId, name })),
+    skipDuplicates: true,
+  });
+  const rows = await prisma.tag.findMany({
+    where: { userId, name: { in: unique } },
+    select: { id: true },
+  });
+  return rows.map((r) => r.id);
 }
 
 function toData(userId: string, input: TransactionInput): Prisma.TransactionUncheckedCreateInput {
@@ -65,12 +67,14 @@ export async function createTransaction(userId: string, input: TransactionInput)
   return created.id;
 }
 
-export async function updateTransaction(userId: string, id: string, input: TransactionInput): Promise<void> {
-  const existing = await prisma.transaction.findFirst({ where: { id, userId, deletedAt: null } });
+export async function updateTransaction(userId: string, id: string, input: TransactionInput) {
+  const existing = await prisma.transaction.findFirst({ where: { id, userId, deletedAt: null }, select: { id: true } });
   if (!existing) throw new NotFoundError("Transaction not found");
   await assertOwnership(userId, input);
   const tagIds = await resolveTagIds(userId, input.tags ?? []);
-  await prisma.$transaction([
+  // Return the fully-hydrated row from the update itself so the caller doesn't
+  // need a follow-up findUnique (one fewer round-trip).
+  const [, updated] = await prisma.$transaction([
     prisma.transactionTag.deleteMany({ where: { transactionId: id } }),
     prisma.transaction.update({
       where: { id },
@@ -78,8 +82,10 @@ export async function updateTransaction(userId: string, id: string, input: Trans
         ...toData(userId, input),
         tags: { create: tagIds.map((tagId) => ({ tagId })) },
       },
+      include: { tags: { include: { tag: true } } },
     }),
   ]);
+  return updated;
 }
 
 /** Soft-delete. Returns the id so the caller can offer undo. */

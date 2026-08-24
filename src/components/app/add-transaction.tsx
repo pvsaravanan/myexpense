@@ -1,5 +1,6 @@
 "use client";
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { useSWRConfig } from "swr";
 import { Modal } from "@/components/ui/modal";
 import { TransactionForm } from "./transaction-form";
 import { useAppData } from "./app-data";
@@ -13,8 +14,11 @@ interface TransactionModalValue {
 
 const Ctx = createContext<TransactionModalValue | null>(null);
 
+type TxnList = { transactions: TransactionDTO[]; total: number };
+
 export function TransactionModalProvider({ children }: { children: React.ReactNode }) {
   const { refresh } = useAppData();
+  const { mutate } = useSWRConfig();
   const toast = useToast();
   const [state, setState] = useState<
     { mode: "add"; prefillDate?: string } | { mode: "edit"; txn: TransactionDTO } | null
@@ -43,6 +47,26 @@ export function TransactionModalProvider({ children }: { children: React.ReactNo
 
   const onSaved = (txn: TransactionDTO, mode: "add" | "edit") => {
     close();
+    // Paint the saved row into every transactions-list cache immediately so the
+    // change shows the instant the modal closes, without waiting on the round
+    // trip to the hosted DB. `refresh()` below then reconciles in the
+    // background (ordering, filters, server-rendered tiles).
+    mutate(
+      (key) => typeof key === "string" && key.startsWith("/api/transactions"),
+      (curr?: TxnList) => {
+        if (!curr) return curr;
+        const idx = curr.transactions.findIndex((t) => t.id === txn.id);
+        if (idx === -1) {
+          return mode === "add"
+            ? { transactions: [txn, ...curr.transactions], total: curr.total + 1 }
+            : curr;
+        }
+        const transactions = curr.transactions.slice();
+        transactions[idx] = txn;
+        return { transactions, total: curr.total };
+      },
+      { revalidate: false },
+    );
     refresh();
     toast.success(mode === "add" ? "Transaction added" : "Changes saved");
   };
