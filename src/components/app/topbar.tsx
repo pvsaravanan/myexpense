@@ -19,7 +19,7 @@ export function Topbar() {
         onClick={toggle}
         aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         aria-expanded={!collapsed}
-        className="hidden h-9 w-9 items-center justify-center rounded-none border border-transparent text-muted transition-colors hover:border-border hover:bg-surface-2 hover:text-fg md:flex"
+        className="hidden h-9 w-9 items-center justify-center rounded-none text-muted transition-colors hover:bg-surface-2 hover:text-fg md:flex"
       >
         <PanelLeft className="h-5 w-5" />
       </button>

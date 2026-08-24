@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Field, Input, Select } from "@/components/ui/field";
 import { Switch } from "@/components/ui/switch";
 import { AvatarCropModal } from "./avatar-crop-modal";
+import { ExportModal } from "./export-modal";
 import { useToast } from "@/components/ui/toast";
 
 interface WidgetItem {
@@ -49,6 +50,7 @@ export function SettingsView() {
   useEffect(() => setName(user.name), [user.name]);
   const nameDirty = name.trim().length > 0 && name.trim() !== user.name;
 
+  const [showExport, setShowExport] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [cropSrc, setCropSrc] = useState<string | null>(null);
@@ -266,7 +268,7 @@ export function SettingsView() {
       <Card>
         <CardHeader title="Appearance" subtitle="Choose how MyExpense looks." />
         <CardBody className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-fg">Theme — Light / System / Dark</p>
+          <p className="text-sm text-fg">Theme — Light / Dark</p>
           <ThemeToggle />
         </CardBody>
       </Card>
@@ -363,13 +365,13 @@ export function SettingsView() {
               <Download className="h-4 w-4" aria-hidden />
               Download full backup (JSON)
             </a>
-            <a
-              href="/api/export?format=csv"
+            <button
+              onClick={() => setShowExport(true)}
               className="inline-flex h-9 items-center justify-center gap-2 rounded-none border border-border bg-surface-2 px-4 text-sm font-medium text-fg transition-colors hover:bg-border/60"
             >
               <Download className="h-4 w-4" aria-hidden />
               Export transactions (CSV)
-            </a>
+            </button>
           </div>
           <div>
             <Link
@@ -390,6 +392,7 @@ export function SettingsView() {
         onCancel={closeCrop}
         onConfirm={handleCropConfirm}
       />
+      <ExportModal open={showExport} onClose={() => setShowExport(false)} />
     </div>
   );
 }

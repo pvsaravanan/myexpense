@@ -23,7 +23,7 @@ export function BottomNav() {
 
   return (
     <>
-      <nav className="fixed inset-x-0 bottom-0 z-40 border-t-2 border-border bg-surface/95 backdrop-blur-md md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-40 border-t-2 border-border bg-surface/95 backdrop-blur-md md:hidden print:hidden">
         <div className="mx-auto grid max-w-lg grid-cols-5 items-center px-2 pt-1 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))]">
           <Tab {...TABS[0]} active={isActive(TABS[0].href)} />
           <Tab {...TABS[1]} active={isActive(TABS[1].href)} />

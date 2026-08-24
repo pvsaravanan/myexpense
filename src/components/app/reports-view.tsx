@@ -50,13 +50,22 @@ export function ReportsView({
 }) {
   const [report, setReport] = useState<ReportType>("overview");
 
+  const reportLabel = REPORT_OPTIONS.find((o) => o.value === report)?.label ?? "Overview";
+
   return (
     <div className="space-y-5">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      {/* Print-only header: visible in PDF, hidden on screen */}
+      <div className="hidden print:block print:mb-2">
+        <h1 className="text-xl font-bold text-fg">MyExpense — {reportLabel} Report</h1>
+        <p className="mt-1 text-sm text-muted">{monthLabel}</p>
+        <hr className="mt-3 border-border" />
+      </div>
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between print:hidden">
         <div className="w-full overflow-x-auto pb-1 sm:w-auto sm:pb-0 no-scrollbar">
           <Segmented value={report} onChange={setReport} options={REPORT_OPTIONS} size="sm" className="w-full sm:w-auto" />
         </div>
-        <div className="flex items-center gap-2 print:hidden">
+        <div className="flex items-center gap-2">
           <a
             href="/api/export?format=csv"
             className="flex-1 sm:flex-none inline-flex h-9 items-center justify-center gap-2 rounded-none border border-border-strong px-4 text-sm font-medium text-fg transition-colors hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
@@ -120,8 +129,18 @@ function DistributionTiles({ values, unit = "amount" }: { values: number[]; unit
 }
 
 function dailySeries(a: ReportsAnalytics, key: "expense" | "income") {
-  return a.daily.map((d) => ({ label: String(Number(d.date.slice(8, 10))), value: d[key] }));
+  const isMultiMonth = a.daily.length > 31;
+  return a.daily.map((d) => {
+    // Single month: "1", "2", … "31". Multi-month: "Jun 1", "Jun 15", …
+    const day = Number(d.date.slice(8, 10));
+    const label = isMultiMonth
+      ? `${MONTH_SHORT[Number(d.date.slice(5, 7)) - 1]} ${day}`
+      : String(day);
+    return { label, value: d[key] };
+  });
 }
+
+const MONTH_SHORT = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
 /* ----------------------------------------------------------------- overview */
 
@@ -148,7 +167,7 @@ function OverviewReport({ a, label }: { a: ReportsAnalytics; label: string }) {
         <CardHeader title="Daily spending" subtitle={label} />
         <CardBody className="pt-2">
           {a.transactionCount === 0 ? (
-            <EmptyState title="No activity this month" description="Charts appear once you record transactions." />
+            <EmptyState title="No activity this period" description="Charts appear once you record transactions." />
           ) : (
             <TrendArea data={dailySeries(a, "expense")} name="Spent" />
           )}
@@ -277,7 +296,7 @@ function AccountReport({ perAccount }: { perAccount: PerAccountRow[] }) {
       </div>
 
       <Card>
-        <CardHeader title="Accounts" subtitle="Balances and this month's activity" />
+        <CardHeader title="Accounts" subtitle="Balances and period activity" />
         <CardBody className="px-0 py-0">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -285,7 +304,7 @@ function AccountReport({ perAccount }: { perAccount: PerAccountRow[] }) {
                 <tr className="border-b border-border text-left text-xs text-muted">
                   <th className="px-5 py-2.5 font-medium">Account</th>
                   <th className="px-3 py-2.5 font-medium">Type</th>
-                  <th className="px-3 py-2.5 text-right font-medium">Spent this month</th>
+                  <th className="px-3 py-2.5 text-right font-medium">Spent</th>
                   <th className="px-3 py-2.5 text-right font-medium">Txns</th>
                   <th className="px-5 py-2.5 text-right font-medium">Balance</th>
                 </tr>
@@ -409,7 +428,7 @@ function ExpenseReport({ a }: { a: ReportsAnalytics }) {
         <CardHeader title="Daily spending" subtitle="This month" />
         <CardBody className="pt-2">
           {a.transactionCount === 0 ? (
-            <EmptyState title="No spending this month" description="Charts appear once you record expenses." />
+            <EmptyState title="No spending this period" description="Charts appear once you record expenses." />
           ) : (
             <TrendArea data={dailySeries(a, "expense")} name="Spent" />
           )}

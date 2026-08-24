@@ -213,3 +213,119 @@ input[type="date"]::-webkit-date-and-time-value {
 input[type="date"]::-webkit-calendar-picker-indicator {
   margin-inline-start: auto;
 }
+
+/* ------------------------------------------------------------------ print */
+/* Clean, structured PDF output when the user clicks "Print / PDF". */
+@media print {
+  /* Force light, ink-friendly palette. */
+  :root {
+    --bg: 0 0% 100%;
+    --surface: 0 0% 100%;
+    --surface-2: 0 0% 97%;
+    --border: 0 0% 75%;
+    --border-strong: 0 0% 55%;
+    --fg: 0 0% 10%;
+    --muted: 0 0% 30%;
+    --faint: 0 0% 50%;
+    --shadow: 0 0% 60%;
+    color-scheme: light;
+  }
+
+  /* Page setup */
+  @page {
+    size: A4 portrait;
+    margin: 16mm 14mm;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 11pt;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Hide chrome: sidebar, topbar, bottom nav, action buttons, segmented tabs */
+  aside,
+  header,
+  nav,
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* The main content area fills the page without the shell padding. */
+  main {
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+  main > div {
+    max-width: none !important;
+  }
+  /* Let the flex shell collapse to just the content column. */
+  .flex.min-h-screen {
+    display: block !important;
+  }
+
+  /* Kill decorative shadows so cards print flat. */
+  .shadow-card,
+  .shadow-stamp,
+  .shadow-stamp-sm,
+  .shadow-stamp-lg,
+  .shadow-pop,
+  .stamp,
+  .stamp-sm {
+    box-shadow: none !important;
+  }
+
+  /* Tighten card borders for print clarity. */
+  .card,
+  [class*="border-border"] {
+    border-width: 0.5pt !important;
+  }
+
+  /* Tables: avoid breaking mid-row. */
+  table {
+    page-break-inside: auto;
+  }
+  thead {
+    display: table-header-group;
+  }
+  tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+
+  /* Cards and stat tiles should not break across pages. */
+  .rounded-none[class*="border"],
+  .grid > div {
+    break-inside: avoid;
+  }
+
+  /* Charts: ensure they render on one page. Recharts SVGs sometimes overflow. */
+  .recharts-wrapper {
+    page-break-inside: avoid;
+    break-inside: avoid;
+    max-width: 100% !important;
+  }
+  .recharts-wrapper svg {
+    max-width: 100% !important;
+  }
+
+  /* Open all overflow containers so nothing is scrolled out of the PDF. */
+  .overflow-x-auto,
+  .overflow-y-auto,
+  .overflow-x-hidden {
+    overflow: visible !important;
+  }
+
+  /* Links: don't underline in PDF, it clutters tables. */
+  a {
+    text-decoration: none !important;
+    color: inherit !important;
+  }
+
+  /* Scrollbar pseudo-elements are invisible in print, but remove their space. */
+  ::-webkit-scrollbar {
+    display: none;
+  }
+}

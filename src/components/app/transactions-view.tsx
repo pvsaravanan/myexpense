@@ -7,6 +7,7 @@ import { Input, Select } from "@/components/ui/field";
 import { EmptyState, Skeleton } from "@/components/ui/misc";
 import { Money } from "@/components/money";
 import { TransactionRow } from "./transaction-row";
+import { ExportModal } from "./export-modal";
 import { useAppData } from "./app-data";
 import { swrFetcher } from "@/lib/http";
 import { toPaise } from "@/lib/money";
@@ -45,6 +46,7 @@ export function TransactionsView({
   const [filters, setFilters] = useState<Filters>(EMPTY);
   const [debouncedQ, setDebouncedQ] = useState("");
   const [showFilters, setShowFilters] = useState(false);
+  const [showExport, setShowExport] = useState(false);
   const [take, setTake] = useState(50);
 
   useEffect(() => {
@@ -132,9 +134,9 @@ export function TransactionsView({
           Filters
           {activeChips.length > 0 && <span className="ml-1 rounded-none bg-brand px-1.5 text-2xs text-brand-fg">{activeChips.length}</span>}
         </Button>
-        <a href="/api/export?format=csv" className="inline-flex">
-          <Button variant="outline"><Download className="h-4 w-4" />Export</Button>
-        </a>
+        <Button variant="outline" onClick={() => setShowExport(true)}>
+          <Download className="h-4 w-4" />Export
+        </Button>
       </div>
 
       {/* Filter panel */}
@@ -239,6 +241,12 @@ export function TransactionsView({
           )}
         </div>
       )}
+
+      <ExportModal
+        open={showExport}
+        onClose={() => setShowExport(false)}
+        initial={filters}
+      />
     </div>
   );
 }

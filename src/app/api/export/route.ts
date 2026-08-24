@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { withUser } from "@/lib/api";
 import { buildCSV } from "@/lib/csv";
 import { toISODate } from "@/lib/dates";
+import { buildWhere } from "@/lib/query";
 import { PAYMENT_METHOD_LABELS, TYPE_LABELS, type PaymentMethod, type TransactionType } from "@/lib/constants";
 
 export const GET = withUser(async (user, req: NextRequest) => {
@@ -10,9 +11,13 @@ export const GET = withUser(async (user, req: NextRequest) => {
   const stamp = toISODate(new Date());
 
   if (format === "csv") {
+    // Apply the same filter params the transactions list accepts (date range,
+    // type, account, category, tag, text search, amount range).
+    const where = buildWhere(user.id, req.nextUrl.searchParams);
+
     const [txns, categories, accounts] = await Promise.all([
       prisma.transaction.findMany({
-        where: { userId: user.id, deletedAt: null },
+        where,
         include: { tags: { include: { tag: true } } },
         orderBy: { date: "desc" },
       }),
