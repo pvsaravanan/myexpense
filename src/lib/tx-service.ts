@@ -273,6 +273,39 @@ export async function softDeleteTransaction(userId: string, id: string): Promise
   await prisma.transaction.update({ where: { id }, data: { deletedAt: new Date() } });
 }
 
+/**
+ * Soft-delete a batch of transactions in one go (multi-select "delete" in
+ * the transactions list). Any selected row that belongs to a split group
+ * takes its whole group down too, so a split expense is never left
+ * half-deleted just because only one of its parts was checked.
+ */
+export async function bulkSoftDeleteTransactions(userId: string, ids: string[]): Promise<number> {
+  const unique = [...new Set(ids)];
+  if (unique.length === 0) return 0;
+
+  const rows = await prisma.transaction.findMany({
+    where: { id: { in: unique }, userId, deletedAt: null },
+    select: { id: true, splitGroupId: true },
+  });
+  if (rows.length === 0) return 0;
+
+  const splitGroupIds = [...new Set(rows.map((r) => r.splitGroupId).filter(Boolean) as string[])];
+  const plainIds = rows.filter((r) => !r.splitGroupId).map((r) => r.id);
+
+  const result = await prisma.transaction.updateMany({
+    where: {
+      userId,
+      deletedAt: null,
+      OR: [
+        ...(plainIds.length ? [{ id: { in: plainIds } }] : []),
+        ...(splitGroupIds.length ? [{ splitGroupId: { in: splitGroupIds } }] : []),
+      ],
+    },
+    data: { deletedAt: new Date() },
+  });
+  return result.count;
+}
+
 export async function restoreTransaction(userId: string, id: string): Promise<void> {
   const existing = await prisma.transaction.findFirst({ where: { id, userId } });
   if (!existing) throw new NotFoundError("Transaction not found");

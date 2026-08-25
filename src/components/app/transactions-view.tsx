@@ -1,14 +1,16 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import useSWR from "swr";
-import { Filter, Search, X } from "lucide-react";
+import { CheckSquare, Filter, Search, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/field";
 import { EmptyState, Skeleton } from "@/components/ui/misc";
 import { Money } from "@/components/money";
+import { useConfirm } from "@/components/ui/confirm";
+import { useToast } from "@/components/ui/toast";
 import { TransactionRow } from "./transaction-row";
 import { useAppData } from "./app-data";
-import { swrFetcher } from "@/lib/http";
+import { apiPost, swrFetcher } from "@/lib/http";
 import { toPaise } from "@/lib/money";
 import { fromISODate, formatDate } from "@/lib/dates";
 import {
@@ -42,10 +44,15 @@ export function TransactionsView({
   initialData?: { transactions: TransactionDTO[]; total: number };
 } = {}) {
   const { categories, accounts, tags } = useAppData();
+  const confirm = useConfirm();
+  const toast = useToast();
   const [filters, setFilters] = useState<Filters>(EMPTY);
   const [debouncedQ, setDebouncedQ] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [take, setTake] = useState(50);
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedQ(filters.q), 300);
@@ -119,6 +126,48 @@ export function TransactionsView({
   const activeChips = buildChips(filters, { categories, accounts });
   const set = (patch: Partial<Filters>) => setFilters((f) => ({ ...f, ...patch }));
 
+  function exitSelectMode() {
+    setSelectMode(false);
+    setSelectedIds(new Set());
+  }
+
+  function toggleSelect(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  const allSelected = txns.length > 0 && txns.every((t) => selectedIds.has(t.id));
+  function toggleSelectAll() {
+    setSelectedIds(allSelected ? new Set() : new Set(txns.map((t) => t.id)));
+  }
+
+  async function onBulkDelete() {
+    const count = selectedIds.size;
+    if (count === 0) return;
+    const ok = await confirm({
+      title: `Delete ${count} transaction${count === 1 ? "" : "s"}?`,
+      message: "This can't be undone from here.",
+      confirmLabel: "Delete",
+      danger: true,
+    });
+    if (!ok) return;
+    setDeleting(true);
+    try {
+      await apiPost("/api/transactions/bulk-delete", { ids: [...selectedIds] });
+      toast.success(`${count} transaction${count === 1 ? "" : "s"} deleted`);
+      exitSelectMode();
+      mutate();
+    } catch {
+      toast.error("Could not delete the selected transactions");
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   return (
     <div className="space-y-4">
       {/* Search + actions */}
@@ -132,7 +181,28 @@ export function TransactionsView({
           Filters
           {activeChips.length > 0 && <span className="ml-1 rounded-none bg-brand px-1.5 text-2xs text-brand-fg">{activeChips.length}</span>}
         </Button>
+        <Button variant={selectMode ? "secondary" : "outline"} onClick={() => (selectMode ? exitSelectMode() : setSelectMode(true))}>
+          <CheckSquare className="h-4 w-4" />
+          {selectMode ? "Cancel" : "Select"}
+        </Button>
       </div>
+
+      {/* Bulk selection toolbar */}
+      {selectMode && (
+        <div className="flex flex-wrap items-center gap-3 rounded-none border border-border bg-surface-2 px-4 py-2.5 text-sm animate-fade-in">
+          <label className="flex items-center gap-2 text-muted">
+            <input type="checkbox" checked={allSelected} onChange={toggleSelectAll} className="h-4 w-4 accent-brand" />
+            Select all
+          </label>
+          <span className="text-muted">{selectedIds.size} selected</span>
+          <div className="ml-auto flex gap-2">
+            <Button variant="danger" size="sm" disabled={selectedIds.size === 0} loading={deleting} onClick={onBulkDelete}>
+              <Trash2 className="h-4 w-4" />
+              Delete
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Filter panel */}
       {showFilters && (
@@ -225,7 +295,17 @@ export function TransactionsView({
                 <Money paise={-group.net} tone={group.net >= 0 ? "expense" : "income"} className="text-xs font-medium" />
               </div>
               <div className="divide-y divide-border px-2 py-1">
-                {group.items.map((t) => <TransactionRow key={t.id} txn={t} showDate={false} onChanged={() => mutate()} />)}
+                {group.items.map((t) => (
+                  <TransactionRow
+                    key={t.id}
+                    txn={t}
+                    showDate={false}
+                    onChanged={() => mutate()}
+                    selectMode={selectMode}
+                    selected={selectedIds.has(t.id)}
+                    onToggleSelect={toggleSelect}
+                  />
+                ))}
               </div>
             </div>
           ))}

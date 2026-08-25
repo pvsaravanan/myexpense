@@ -23,10 +23,16 @@ export function TransactionRow({
   txn,
   showDate = true,
   onChanged,
+  selectMode = false,
+  selected = false,
+  onToggleSelect,
 }: {
   txn: TransactionDTO;
   showDate?: boolean;
   onChanged?: () => void;
+  selectMode?: boolean;
+  selected?: boolean;
+  onToggleSelect?: (id: string) => void;
 }) {
   const { refresh } = useAppData();
   const { category, accountName } = useLookups();
@@ -101,6 +107,11 @@ export function TransactionRow({
     ? "trending-up"
     : "tag";
 
+  const openOrToggle = () => {
+    if (selectMode) onToggleSelect?.(txn.id);
+    else openEdit(txn);
+  };
+
   return (
     <div
       className={cn(
@@ -108,8 +119,18 @@ export function TransactionRow({
         busy && "opacity-50",
       )}
     >
+      {selectMode && (
+        <input
+          type="checkbox"
+          checked={selected}
+          onChange={() => onToggleSelect?.(txn.id)}
+          className="h-4 w-4 shrink-0 accent-brand"
+          aria-label={selected ? "Deselect transaction" : "Select transaction"}
+        />
+      )}
+
       <button
-        onClick={() => openEdit(txn)}
+        onClick={openOrToggle}
         className="flex h-9 w-9 shrink-0 items-center justify-center rounded-none"
         style={{ color: badgeColor }}
         aria-label="Edit transaction"
@@ -117,7 +138,7 @@ export function TransactionRow({
         <Icon name={iconName} size={20} strokeWidth={2.2} />
       </button>
 
-      <button onClick={() => openEdit(txn)} className="min-w-0 flex-1 text-left">
+      <button onClick={openOrToggle} className="min-w-0 flex-1 text-left">
         <div className="flex items-center gap-2">
           <p className="min-w-0 flex-1 truncate text-sm font-medium text-fg">{txn.description}</p>
           {txn.recurringId && (
@@ -141,27 +162,29 @@ export function TransactionRow({
         {showDate && <span className="text-2xs text-faint">{formatRelativeDay(fromISODate(txn.date) ?? new Date(), new Date())}</span>}
       </div>
 
-      <div className="relative">
-        <button
-          onClick={() => setMenuOpen((o) => !o)}
-          className="flex h-9 w-9 items-center justify-center rounded-none p-1 text-faint opacity-100 sm:opacity-0 transition-opacity hover:bg-surface hover:text-fg focus:opacity-100 sm:group-hover:opacity-100 active:bg-surface-2"
-          aria-label="Transaction actions"
-        >
-          <MoreVertical className="h-4 w-4" />
-        </button>
-        {menuOpen && (
-          <>
-            <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
-            <div className="absolute right-0 z-20 mt-1 w-40 rounded-none border border-border bg-surface p-1 shadow-pop animate-scale-in">
-              <MenuItem icon={<Pencil className="h-4 w-4" />} onClick={() => { setMenuOpen(false); openEdit(txn); }}>Edit</MenuItem>
-              {!txn.splitGroupId && (
-                <MenuItem icon={<Copy className="h-4 w-4" />} onClick={onDuplicate}>Duplicate</MenuItem>
-              )}
-              <MenuItem icon={<Trash2 className="h-4 w-4" />} onClick={onDelete} danger>Delete</MenuItem>
-            </div>
-          </>
-        )}
-      </div>
+      {!selectMode && (
+        <div className="relative">
+          <button
+            onClick={() => setMenuOpen((o) => !o)}
+            className="flex h-9 w-9 items-center justify-center rounded-none p-1 text-faint opacity-100 sm:opacity-0 transition-opacity hover:bg-surface hover:text-fg focus:opacity-100 sm:group-hover:opacity-100 active:bg-surface-2"
+            aria-label="Transaction actions"
+          >
+            <MoreVertical className="h-4 w-4" />
+          </button>
+          {menuOpen && (
+            <>
+              <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
+              <div className="absolute right-0 z-20 mt-1 w-40 rounded-none border border-border bg-surface p-1 shadow-pop animate-scale-in">
+                <MenuItem icon={<Pencil className="h-4 w-4" />} onClick={() => { setMenuOpen(false); openEdit(txn); }}>Edit</MenuItem>
+                {!txn.splitGroupId && (
+                  <MenuItem icon={<Copy className="h-4 w-4" />} onClick={onDuplicate}>Duplicate</MenuItem>
+                )}
+                <MenuItem icon={<Trash2 className="h-4 w-4" />} onClick={onDelete} danger>Delete</MenuItem>
+              </div>
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }
