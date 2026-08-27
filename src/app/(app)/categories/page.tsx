@@ -3,7 +3,7 @@ import { loadCategories } from "@/lib/queries";
 import { PageHeader } from "@/components/app/page-header";
 import { CategoriesView } from "@/components/app/categories-view";
 
-export const metadata = { title: "Categories · Baaki" };
+export const metadata = { title: "Categories · baaki" };
 
 export default async function CategoriesPage() {
   const user = await requireUserOrRedirect();

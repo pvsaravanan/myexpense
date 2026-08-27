@@ -3,7 +3,7 @@ import { loadRecurring } from "@/lib/queries";
 import { PageHeader } from "@/components/app/page-header";
 import { RecurringView } from "@/components/app/recurring-view";
 
-export const metadata = { title: "Recurring · Baaki" };
+export const metadata = { title: "Recurring · baaki" };
 
 export default async function RecurringPage() {
   const user = await requireUserOrRedirect();

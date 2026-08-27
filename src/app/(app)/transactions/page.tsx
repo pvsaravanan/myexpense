@@ -3,7 +3,7 @@ import { countTransactions, loadTransactions } from "@/lib/queries";
 import { PageHeader } from "@/components/app/page-header";
 import { TransactionsView } from "@/components/app/transactions-view";
 
-export const metadata = { title: "Transactions · Baaki" };
+export const metadata = { title: "Transactions · baaki" };
 
 export default async function TransactionsPage() {
   const user = await requireUserOrRedirect();

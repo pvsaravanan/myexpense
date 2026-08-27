@@ -18,7 +18,7 @@ import { PageHeader } from "@/components/app/page-header";
 import { PeriodNav, type Period } from "@/components/app/period-nav";
 import { ReportsView, type PerAccountRow, type ReportsAnalytics } from "@/components/app/reports-view";
 
-export const metadata = { title: "Reports · Baaki" };
+export const metadata = { title: "Reports · baaki" };
 
 const VALID_PERIODS = new Set<string>(["1m", "3m", "6m", "1y"]);
 const PERIOD_MONTHS: Record<string, number> = { "3m": 3, "6m": 6, "1y": 12 };

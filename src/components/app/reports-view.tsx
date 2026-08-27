@@ -56,7 +56,7 @@ export function ReportsView({
     <div className="space-y-5">
       {/* Print-only header: visible in PDF, hidden on screen */}
       <div className="hidden print:block print:mb-2">
-        <h1 className="text-xl font-bold text-fg">Baaki — {reportLabel} Report</h1>
+        <h1 className="text-xl font-bold text-fg">baaki — {reportLabel} Report</h1>
         <p className="mt-1 text-sm text-muted">{monthLabel}</p>
         <hr className="mt-3 border-border" />
       </div>

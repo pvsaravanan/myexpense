@@ -3,7 +3,7 @@ import { loadAccounts } from "@/lib/queries";
 import { PageHeader } from "@/components/app/page-header";
 import { AccountsView } from "@/components/app/accounts-view";
 
-export const metadata = { title: "Accounts · Baaki" };
+export const metadata = { title: "Accounts · baaki" };
 
 export default async function AccountsPage() {
   const user = await requireUserOrRedirect();

@@ -9,7 +9,7 @@ import { Money } from "@/components/money";
 import { Icon } from "@/components/icon";
 import type { InsightTone } from "@/lib/insights";
 
-export const metadata = { title: "Insights · Baaki" };
+export const metadata = { title: "Insights · baaki" };
 
 export default async function InsightsPage() {
   const user = await requireUserOrRedirect();

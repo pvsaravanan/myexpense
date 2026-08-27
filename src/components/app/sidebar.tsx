@@ -19,7 +19,7 @@ export function Sidebar() {
       )}
     >
       <div className={cn("flex h-16 items-center border-b border-border", collapsed ? "justify-center px-2" : "px-md")}>
-        <Link href="/dashboard" aria-label="Baaki home">
+        <Link href="/dashboard" aria-label="baaki home">
           <Logo showText={!collapsed} />
         </Link>
       </div>

@@ -266,7 +266,7 @@ export function SettingsView() {
 
       {/* Appearance */}
       <Card>
-        <CardHeader title="Appearance" subtitle="Choose how Baaki looks." />
+        <CardHeader title="Appearance" subtitle="Choose how baaki looks." />
         <CardBody className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-fg">Theme — Light / Dark</p>
           <ThemeToggle />

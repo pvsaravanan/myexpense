@@ -1,4 +1,4 @@
-// Baaki data model.
+// baaki data model.
 //
 // Money is ALWAYS stored as an integer number of paise (1 rupee = 100 paise).
 // Never use floats for money. All monetary columns are `Int` (paise).

@@ -99,7 +99,7 @@ export function RecurringView({ recurring }: { recurring: RecurringDTO[] }) {
           <EmptyState
             icon={<CalendarClock className="h-5 w-5" />}
             title="No recurring rules yet"
-            description="Set up bills, subscriptions and income you expect every period, and Baaki will keep track of them."
+            description="Set up bills, subscriptions and income you expect every period, and baaki will keep track of them."
             action={
               <Button onClick={openCreate}>
                 <Plus className="h-4 w-4" />

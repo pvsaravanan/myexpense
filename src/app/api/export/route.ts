@@ -106,7 +106,7 @@ export const GET = withUser(async (user, req: NextRequest) => {
 
   const backup = {
     exportedAt: new Date().toISOString(),
-    app: "Baaki",
+    app: "baaki",
     version: 1,
     note: "All monetary values are in integer paise (1 rupee = 100 paise).",
     transactions: transactions.map((t) => ({

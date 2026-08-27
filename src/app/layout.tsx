@@ -25,10 +25,10 @@ const robotoMono = Roboto_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Baaki — Know where your money goes",
+  title: "baaki — Know where your money goes",
   description:
     "A personal finance and expense tracker: record transactions, track budgets, savings and goals, and understand where your money goes.",
-  applicationName: "Baaki",
+  applicationName: "baaki",
 };
 
 export const viewport: Viewport = {

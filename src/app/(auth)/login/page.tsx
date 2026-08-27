@@ -46,7 +46,7 @@ export default function LoginPage() {
   return (
     <div>
       <h2 className="text-xl font-semibold tracking-tight text-fg">Welcome back</h2>
-      <p className="mt-1 text-sm text-muted">Sign in to your Baaki account.</p>
+      <p className="mt-1 text-sm text-muted">Sign in to your baaki account.</p>
 
       <form onSubmit={onSubmit} className="mt-6 space-y-4" noValidate>
         {formError && (
@@ -95,7 +95,7 @@ export default function LoginPage() {
       </Button>
 
       <p className="mt-6 text-center text-sm text-muted">
-        New to Baaki?{" "}
+        New to baaki?{" "}
         <Link href="/register" className="font-medium text-brand-hover hover:underline">
           Create an account
         </Link>

@@ -3,7 +3,7 @@ import { getMonthlyAnalytics } from "@/lib/analytics";
 import { monthKeyOf, daysInMonth, parseMonthKey, type MonthKey } from "@/lib/dates";
 import { TrendsView } from "@/components/app/trends-view";
 
-export const metadata = { title: "Trends · Baaki" };
+export const metadata = { title: "Trends · baaki" };
 
 export default async function TrendsPage({ searchParams }: { searchParams: Promise<{ m?: string }> }) {
   const user = await requireUserOrRedirect();

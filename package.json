@@ -2,7 +2,7 @@
   "name": "baaki",
   "version": "1.0.0",
   "private": true,
-  "description": "Baaki — Know where your money goes.",
+  "description": "baaki — Know where your money goes.",
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",

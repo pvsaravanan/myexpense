@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 /*
-  Baaki theme tokens. Light is the default (bare :root). Dark is applied via
+  baaki theme tokens. Light is the default (bare :root). Dark is applied via
   a `.dark` class on <html> (set by the theme provider; "system" resolves to the
   OS preference). Every color is defined in light first so nothing is theme-only.
 */
