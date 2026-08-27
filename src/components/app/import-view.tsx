@@ -202,7 +202,7 @@ export function ImportView() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "myexpense-sample.csv";
+    a.download = "baaki-sample.csv";
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -517,7 +517,7 @@ function MapStep({
     <Card>
       <CardHeader
         title="Map your columns"
-        subtitle={`Match your CSV headers to MyExpense fields. ${recordCount} row${recordCount === 1 ? "" : "s"} to import.`}
+        subtitle={`Match your CSV headers to Baaki fields. ${recordCount} row${recordCount === 1 ? "" : "s"} to import.`}
       />
       <CardBody className="space-y-5">
         <div className="grid gap-4 sm:grid-cols-2">
@@ -788,7 +788,7 @@ function DoneStep({ summary, onReset }: { summary: ImportSummary; onReset: () =>
           description={
             summary.duplicates > 0
               ? `${summary.duplicates} duplicate${summary.duplicates === 1 ? "" : "s"} were skipped.`
-              : "Your transactions are now available in MyExpense."
+              : "Your transactions are now available in Baaki."
           }
           action={
             <div className="flex flex-wrap justify-center gap-2">

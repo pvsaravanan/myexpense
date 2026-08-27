@@ -4,7 +4,7 @@ import { prisma } from "../src/lib/db";
  * DESTRUCTIVE: wipes every user's transactions, budgets, goals, and recurring
  * rules from the database this script's DATABASE_URL points at — which, by
  * default, is the same SQLite file the running app reads and writes
- * (prisma/myexpense.db). There is no per-user scoping and no undo.
+ * (prisma/baaki.db). There is no per-user scoping and no undo.
  *
  * Guarded so it cannot run by accident:
  *   1. Requires the literal flag `--yes-delete-everything`.

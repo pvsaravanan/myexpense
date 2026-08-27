@@ -88,7 +88,7 @@ export const GET = withUser(async (user, req: NextRequest) => {
     return new Response("﻿" + csv, {
       headers: {
         "Content-Type": "text/csv; charset=utf-8",
-        "Content-Disposition": `attachment; filename="myexpense-transactions-${stamp}.csv"`,
+        "Content-Disposition": `attachment; filename="baaki-transactions-${stamp}.csv"`,
       },
     });
   }
@@ -106,7 +106,7 @@ export const GET = withUser(async (user, req: NextRequest) => {
 
   const backup = {
     exportedAt: new Date().toISOString(),
-    app: "MyExpense",
+    app: "Baaki",
     version: 1,
     note: "All monetary values are in integer paise (1 rupee = 100 paise).",
     transactions: transactions.map((t) => ({
@@ -130,7 +130,7 @@ export const GET = withUser(async (user, req: NextRequest) => {
   return new Response(JSON.stringify(backup, null, 2), {
     headers: {
       "Content-Type": "application/json; charset=utf-8",
-      "Content-Disposition": `attachment; filename="myexpense-backup-${stamp}.json"`,
+      "Content-Disposition": `attachment; filename="baaki-backup-${stamp}.json"`,
     },
   });
 });

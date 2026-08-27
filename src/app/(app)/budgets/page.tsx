@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/app/page-header";
 import { MonthNav } from "@/components/app/month-nav";
 import { BudgetsView } from "@/components/app/budgets-view";
 
-export const metadata = { title: "Budgets · MyExpense" };
+export const metadata = { title: "Budgets · Baaki" };
 
 export default async function BudgetsPage({ searchParams }: { searchParams: Promise<{ m?: string }> }) {
   const user = await requireUserOrRedirect();

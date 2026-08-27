@@ -2,7 +2,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { PageHeader } from "@/components/app/page-header";
 import { ImportView } from "@/components/app/import-view";
 
-export const metadata = { title: "Import · MyExpense" };
+export const metadata = { title: "Import · Baaki" };
 
 export default async function ImportPage() {
   await getCurrentUser();

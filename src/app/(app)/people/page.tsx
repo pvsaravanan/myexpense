@@ -3,7 +3,7 @@ import { loadContacts } from "@/lib/contacts-service";
 import { PageHeader } from "@/components/app/page-header";
 import { PeopleView } from "@/components/app/people-view";
 
-export const metadata = { title: "People · MyExpense" };
+export const metadata = { title: "People · Baaki" };
 
 export default async function PeoplePage() {
   const user = await requireUserOrRedirect();

@@ -2,7 +2,7 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 
 export type Theme = "light" | "dark" | "system";
-const STORAGE_KEY = "myexpense-theme";
+const STORAGE_KEY = "baaki-theme";
 
 interface ThemeContextValue {
   theme: Theme;

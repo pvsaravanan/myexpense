@@ -1,4 +1,4 @@
-# MyExpense
+# Baaki
 
 **Know where your money goes.** A personal finance and expense tracker — record income,
 expenses, transfers and refunds; track budgets, savings and goals; and turn raw transactions

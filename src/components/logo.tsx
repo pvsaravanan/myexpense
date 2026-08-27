@@ -1,7 +1,7 @@
 import { cn } from "@/lib/cn";
 
 /**
- * MyExpense wordmark. The mark is deliberately pixel-art: a stepped ascending
+ * Baaki wordmark. The mark is deliberately pixel-art: a stepped ascending
  * bar chart drawn on a 12×12 grid with crisp edges, echoing the system's
  * square, zine-like character.
  */
@@ -20,7 +20,7 @@ export function Logo({ className, showText = true }: { className?: string; showT
       </span>
       {showText && (
         <span className="text-label-lg uppercase tracking-[0.04em] text-fg">
-          My<span className="text-brand-hover">Expense</span>
+          Ba<span className="text-brand-hover">aki</span>
         </span>
       )}
     </span>

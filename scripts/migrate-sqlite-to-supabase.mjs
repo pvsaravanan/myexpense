@@ -4,7 +4,7 @@
  *
  *   node scripts/migrate-sqlite-to-supabase.mjs
  *
- * - Reads prisma/myexpense.db with the built-in node:sqlite (Node 22.5+).
+ * - Reads prisma/baaki.db with the built-in node:sqlite (Node 22.5+).
  * - Preserves ids, so it is safe to re-run (skipDuplicates).
  * - Aborts if the target DB already has users, to avoid a mixed/partial state
  *   (override with FORCE=1 only if you know the ids won't collide).
@@ -13,7 +13,7 @@
 import { DatabaseSync } from "node:sqlite";
 import { PrismaClient } from "@prisma/client";
 
-const SQLITE_PATH = "prisma/myexpense.db";
+const SQLITE_PATH = "prisma/baaki.db";
 
 // Insert parents before children so foreign keys resolve.
 const ORDER = [
