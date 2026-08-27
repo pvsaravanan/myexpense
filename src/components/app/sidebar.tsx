@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Plus } from "lucide-react";
+import { PanelLeft, Plus } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { PRIMARY_NAV, SECONDARY_NAV, type NavItem } from "./nav-items";
 import { useTransactionModal } from "./add-transaction";
@@ -10,7 +10,7 @@ import { cn } from "@/lib/cn";
 
 export function Sidebar() {
   const { openAdd } = useTransactionModal();
-  const { collapsed } = useSidebar();
+  const { collapsed, toggle } = useSidebar();
   return (
     <aside
       className={cn(
@@ -18,10 +18,23 @@ export function Sidebar() {
         collapsed ? "w-[68px]" : "w-[232px]",
       )}
     >
-      <div className={cn("flex h-16 items-center border-b border-border", collapsed ? "justify-center px-2" : "px-md")}>
+      <div
+        className={cn(
+          "flex items-center border-b border-border",
+          collapsed ? "flex-col gap-2 px-2 py-3" : "h-16 justify-between px-md",
+        )}
+      >
         <Link href="/dashboard" aria-label="baaki home">
           <Logo showText={!collapsed} />
         </Link>
+        <button
+          onClick={toggle}
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-expanded={!collapsed}
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-none text-muted transition-colors hover:bg-surface-2 hover:text-fg"
+        >
+          <PanelLeft className="h-4 w-4" />
+        </button>
       </div>
 
       <div className={cn("border-b border-border", collapsed ? "p-2" : "p-sm")}>
