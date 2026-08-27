@@ -19,8 +19,8 @@ export function Logo({ className, showText = true }: { className?: string; showT
         </svg>
       </span>
       {showText && (
-        <span className="text-label-lg uppercase tracking-[0.04em] text-fg">
-          ba<span className="text-brand-hover">aki</span>
+        <span className="text-label-lg uppercase tracking-[0.04em] text-brand-hover">
+          baaki
         </span>
       )}
     </span>
