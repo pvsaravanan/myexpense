@@ -25,13 +25,13 @@ export function Sidebar() {
         )}
       >
         <Link href="/dashboard" aria-label="baaki home">
-          <Logo showText={!collapsed} />
+          <Logo />
         </Link>
         <button
           onClick={toggle}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           aria-expanded={!collapsed}
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-none text-muted transition-colors hover:bg-surface-2 hover:text-fg"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-none text-muted transition-colors hover:text-fg"
         >
           <PanelLeft className="h-4 w-4" />
         </button>
