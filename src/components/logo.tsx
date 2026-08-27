@@ -1,9 +1,9 @@
 import { cn } from "@/lib/cn";
 
 /** baaki brand mark (src/assets/baaki_logo.svg). Icon only, no wordmark. */
-export function Logo({ className }: { className?: string }) {
+export function Logo({ className, size = "h-9 w-9" }: { className?: string; size?: string }) {
   return (
-    <span aria-hidden className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-none", className)}>
+    <span aria-hidden className={cn("flex shrink-0 items-center justify-center rounded-none", size, className)}>
       {/* Cropped to the mark's own bounding box (the source file has a lot of
           transparent margin) so it fills this box instead of leaving a gap. */}
       <svg viewBox="375 175 560 815" className="h-full w-full">

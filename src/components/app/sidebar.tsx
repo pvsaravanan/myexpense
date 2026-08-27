@@ -20,18 +20,21 @@ export function Sidebar() {
     >
       <div
         className={cn(
-          "flex items-center border-b border-border",
-          collapsed ? "flex-col gap-2 px-2 py-3" : "h-16 justify-between px-md",
+          "flex h-16 items-center justify-between border-b border-border",
+          collapsed ? "gap-0.5 px-1" : "px-md",
         )}
       >
         <Link href="/dashboard" aria-label="baaki home">
-          <Logo />
+          <Logo size={collapsed ? "h-7 w-7" : "h-9 w-9"} />
         </Link>
         <button
           onClick={toggle}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           aria-expanded={!collapsed}
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-none text-muted transition-colors hover:text-fg"
+          className={cn(
+            "flex shrink-0 items-center justify-center rounded-none text-muted transition-colors hover:text-fg",
+            collapsed ? "h-7 w-7" : "h-8 w-8",
+          )}
         >
           <PanelLeft className="h-4 w-4" />
         </button>
