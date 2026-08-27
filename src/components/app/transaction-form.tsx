@@ -86,9 +86,21 @@ export function TransactionForm({
   const [amount, setAmount] = useState(primary && !editingGroup ? String(toRupees(primary.amount)) : "");
   const [description, setDescription] = useState(primary?.description ?? "");
   const [date, setDate] = useState(primary?.date ?? prefillDate ?? toISODate(new Date()));
-  const [categoryId, setCategoryId] = useState(primary?.categoryId ?? "");
+  const [categoryId, setCategoryId] = useState(() => {
+    if (primary?.categoryId) return primary.categoryId;
+    // Category is mandatory now, so a brand-new expense/income form starts
+    // pre-selected on the first eligible category rather than blank.
+    const startType = editingGroup ? "expense" : primary?.type ?? "expense";
+    if (startType === "transfer") return "";
+    const wantIncome = startType === "income";
+    const first = categories.find((c) => c.isActive && (wantIncome ? c.kind === "income" || c.kind === "both" : c.kind === "expense" || c.kind === "both"));
+    return first?.id ?? "";
+  });
   const [newCatOpen, setNewCatOpen] = useState(false);
   const fallbackAccountId = accounts.find((a) => a.id === preference.defaultAccountId)?.id ?? accounts[0]?.id ?? "";
+  // Splits are always an expense breakdown — used to seed every blank split
+  // row so a newly-added part isn't left uncategorized.
+  const fallbackExpenseCategoryId = categories.find((c) => c.isActive && (c.kind === "expense" || c.kind === "both"))?.id ?? "";
   const [accountId, setAccountId] = useState(primary?.accountId ?? fallbackAccountId);
   const [transferAccountId, setTransferAccountId] = useState(primary?.transferAccountId ?? "");
   const initialMethodIsCustom = primary?.paymentMethod ? !PAYMENT_METHODS.includes(primary.paymentMethod as any) : false;
@@ -110,12 +122,12 @@ export function TransactionForm({
       : editingSingle && primary
         ? // Converting a saved single into a split: seed part 1 from it, add a blank part 2.
           [
-            { amount: String(toRupees(primary.amount)), categoryId: primary.categoryId ?? "", accountId: primary.accountId },
-            { amount: "", categoryId: "", accountId: primary.accountId },
+            { amount: String(toRupees(primary.amount)), categoryId: primary.categoryId ?? fallbackExpenseCategoryId, accountId: primary.accountId },
+            { amount: "", categoryId: fallbackExpenseCategoryId, accountId: primary.accountId },
           ]
         : [
-            { amount: "", categoryId: "", accountId: fallbackAccountId },
-            { amount: "", categoryId: "", accountId: fallbackAccountId },
+            { amount: "", categoryId: fallbackExpenseCategoryId, accountId: fallbackAccountId },
+            { amount: "", categoryId: fallbackExpenseCategoryId, accountId: fallbackAccountId },
           ],
   );
   const [splitTotal, setSplitTotal] = useState("");
@@ -162,7 +174,7 @@ export function TransactionForm({
     setParts((prev) => prev.map((p, idx) => (idx === i ? { ...p, ...patch } : p)));
   }
   function addPart() {
-    setParts((prev) => [...prev, { amount: "", categoryId: "", accountId: fallbackAccountId }]);
+    setParts((prev) => [...prev, { amount: "", categoryId: fallbackExpenseCategoryId, accountId: fallbackAccountId }]);
   }
   function removePart(i: number) {
     setParts((prev) => (prev.length > 2 ? prev.filter((_, idx) => idx !== i) : prev));
@@ -241,6 +253,7 @@ export function TransactionForm({
       if (parts.length < 2) localErrors.parts = "Add at least 2 splits";
       for (const p of parts) {
         if (!p.accountId) { localErrors.parts = "Choose an account for every split"; break; }
+        if (!p.categoryId) { localErrors.parts = "Choose a category for every split"; break; }
         if (safePaise(p.amount) <= 0) { localErrors.parts = "Every split needs an amount greater than zero"; break; }
       }
       if (!description.trim()) localErrors.description = "Description is required";
@@ -255,7 +268,7 @@ export function TransactionForm({
         paymentMethod: (methodSelect === "__custom__" ? customMethod.trim().toLowerCase() : methodSelect) || null,
         notes: notes.trim() || null,
         tags,
-        parts: parts.map((p) => ({ amount: safePaise(p.amount), categoryId: p.categoryId || null, accountId: p.accountId })),
+        parts: parts.map((p) => ({ amount: safePaise(p.amount), categoryId: p.categoryId, accountId: p.accountId })),
         shares,
         // Converting a saved single expense into a split: the server replaces it.
         replaceId: editingSingle ? initial!.id : undefined,
@@ -288,6 +301,7 @@ export function TransactionForm({
     if (amountParsed && paise <= 0) localErrors.amount = "Amount must be greater than zero";
     if (!description.trim()) localErrors.description = "Description is required";
     if (!accountId) localErrors.accountId = "Choose an account";
+    if (!isTransfer && !categoryId) localErrors.categoryId = "Choose a category";
     if (isTransfer && (!transferAccountId || transferAccountId === accountId)) {
       localErrors.transferAccountId = "Choose a different destination account";
     }
@@ -301,7 +315,7 @@ export function TransactionForm({
       amount: paise,
       description: description.trim(),
       date,
-      categoryId: isTransfer ? null : categoryId || null,
+      categoryId: isTransfer ? null : categoryId,
       accountId,
       transferAccountId: isTransfer ? transferAccountId : null,
       paymentMethod: isTransfer
@@ -345,11 +359,16 @@ export function TransactionForm({
           onChange={(v) => {
             setType(v);
             setCategoryId((prev) => {
-              if (!prev || v === "transfer") return v === "transfer" ? "" : prev;
+              if (v === "transfer") return "";
+              const wantIncome = v === "income";
+              const matches = (c: (typeof categories)[number]) =>
+                wantIncome ? c.kind === "income" || c.kind === "both" : c.kind === "expense" || c.kind === "both";
               const cat = categories.find((c) => c.id === prev);
-              if (!cat) return "";
-              const ok = v === "income" ? cat.kind === "income" || cat.kind === "both" : cat.kind === "expense" || cat.kind === "both";
-              return ok ? prev : "";
+              if (cat && matches(cat)) return prev;
+              // Switching to a type the current category doesn't fit — fall
+              // back to the first eligible one so the field stays filled
+              // (category is mandatory) rather than reverting to blank.
+              return categories.find((c) => c.isActive && matches(c))?.id ?? "";
             });
           }}
           options={TYPE_OPTIONS}
@@ -451,8 +470,12 @@ export function TransactionForm({
                   ))}
                 </Select>
               </div>
-              <Select value={part.categoryId} onChange={(e) => updatePart(i, { categoryId: e.target.value })}>
-                <option value="">Uncategorized</option>
+              <Select
+                value={part.categoryId}
+                invalid={!!errors.parts && !part.categoryId}
+                onChange={(e) => updatePart(i, { categoryId: e.target.value })}
+              >
+                {!part.categoryId && <option value="">Choose a category…</option>}
                 {eligibleCategories.map((c) => (
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
@@ -479,6 +502,7 @@ export function TransactionForm({
               <Select
                 id="category"
                 value={categoryId}
+                invalid={!!errors.categoryId}
                 onChange={(e) => {
                   if (e.target.value === "__new__") {
                     setNewCatOpen(true);
@@ -488,12 +512,13 @@ export function TransactionForm({
                   }
                 }}
               >
-                <option value="">Uncategorized</option>
+                {!categoryId && <option value="">Choose a category…</option>}
                 {eligibleCategories.map((c) => (
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
                 <option value="__new__">+ Create new category…</option>
               </Select>
+              {errors.categoryId && <p className="text-xs text-expense">{errors.categoryId}</p>}
             </div>
           )}
 

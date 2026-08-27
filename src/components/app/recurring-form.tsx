@@ -44,7 +44,16 @@ export function RecurringForm({
   const [name, setName] = useState(initial?.name ?? "");
   const [type, setType] = useState<RecurringType>(initial?.type ?? "expense");
   const [amount, setAmount] = useState(initial ? String(toRupees(initial.amount)) : "");
-  const [categoryId, setCategoryId] = useState(initial?.categoryId ?? "");
+  const [categoryId, setCategoryId] = useState(() => {
+    if (initial?.categoryId) return initial.categoryId;
+    // Category is mandatory now, so a brand-new rule starts pre-selected on
+    // the first eligible category rather than blank.
+    const startType = initial?.type ?? "expense";
+    if (startType === "transfer") return "";
+    const wantIncome = startType === "income";
+    const first = categories.find((c) => c.isActive && (wantIncome ? c.kind === "income" || c.kind === "both" : c.kind === "expense" || c.kind === "both"));
+    return first?.id ?? "";
+  });
   const [newCatOpen, setNewCatOpen] = useState(false);
   const fallbackAccountId = accounts.find((a) => a.id === preference.defaultAccountId)?.id ?? accounts[0]?.id ?? "";
   const [accountId, setAccountId] = useState(
@@ -98,6 +107,7 @@ export function RecurringForm({
     if (!Number.isFinite(intervalNum) || intervalNum < 1) localErrors.interval = "Must be at least 1";
 
     if (!accountId) localErrors.accountId = "Choose an account";
+    if (!isTransfer && !categoryId) localErrors.categoryId = "Choose a category";
     if (isTransfer && (!transferAccountId || transferAccountId === accountId)) {
       localErrors.transferAccountId = "Choose a different destination account";
     }
@@ -113,7 +123,7 @@ export function RecurringForm({
       name: name.trim(),
       type,
       amount: paise,
-      categoryId: isTransfer ? null : categoryId || null,
+      categoryId: isTransfer ? null : categoryId,
       accountId,
       transferAccountId: isTransfer ? transferAccountId : null,
       paymentMethod: isTransfer
@@ -165,17 +175,17 @@ export function RecurringForm({
         value={type}
         onChange={(v) => {
           setType(v);
-          // Drop the selected category if it isn't eligible for the new type
-          // (see the matching note in transaction-form).
+          // Fall back to the first eligible category for the new type (see
+          // the matching note in transaction-form) — category is mandatory,
+          // so this keeps the field filled instead of reverting to blank.
           setCategoryId((prev) => {
-            if (!prev || v === "transfer") return v === "transfer" ? "" : prev;
+            if (v === "transfer") return "";
+            const wantIncome = v === "income";
+            const matches = (c: (typeof categories)[number]) =>
+              wantIncome ? c.kind === "income" || c.kind === "both" : c.kind === "expense" || c.kind === "both";
             const cat = categories.find((c) => c.id === prev);
-            if (!cat) return "";
-            const ok =
-              v === "income"
-                ? cat.kind === "income" || cat.kind === "both"
-                : cat.kind === "expense" || cat.kind === "both";
-            return ok ? prev : "";
+            if (cat && matches(cat)) return prev;
+            return categories.find((c) => c.isActive && matches(c))?.id ?? "";
           });
         }}
         options={TYPE_OPTIONS}
@@ -225,6 +235,7 @@ export function RecurringForm({
             <Select
               id="category"
               value={categoryId}
+              invalid={!!errors.categoryId}
               onChange={(e) => {
                 if (e.target.value === "__new__") {
                   setNewCatOpen(true);
@@ -233,7 +244,7 @@ export function RecurringForm({
                 }
               }}
             >
-              <option value="">Uncategorized</option>
+              {!categoryId && <option value="">Choose a category…</option>}
               {eligibleCategories.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -241,6 +252,7 @@ export function RecurringForm({
               ))}
               <option value="__new__">+ Create new category…</option>
             </Select>
+            {errors.categoryId && <p className="text-xs text-expense">{errors.categoryId}</p>}
           </div>
         )}
 

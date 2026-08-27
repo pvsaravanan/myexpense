@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Select } from "@/components/ui/field";
@@ -189,24 +190,26 @@ function CategoryRow({
 }) {
   return (
     <li className={cn("group flex items-center gap-3 px-4 py-3", !category.isActive && "opacity-70")}>
-      <span
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-none"
-        style={{ color: category.color }}
-      >
-        <Icon name={category.icon} size={20} />
-      </span>
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="truncate text-sm font-medium text-fg">{category.name}</span>
-          {category.isSystem && <Badge tone="brand">System</Badge>}
-          {!category.isActive && <Badge tone="neutral">Inactive</Badge>}
+      <Link href={`/categories/${category.id}`} className="flex min-w-0 flex-1 items-center gap-3">
+        <span
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-none"
+          style={{ color: category.color }}
+        >
+          <Icon name={category.icon} size={20} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="truncate text-sm font-medium text-fg">{category.name}</span>
+            {category.isSystem && <Badge tone="brand">System</Badge>}
+            {!category.isActive && <Badge tone="neutral">Inactive</Badge>}
+          </div>
+          {category.monthlyBudget != null && (
+            <p className="text-xs text-muted">
+              Budget <Money paise={category.monthlyBudget} tone="default" className="font-medium" /> / month
+            </p>
+          )}
         </div>
-        {category.monthlyBudget != null && (
-          <p className="text-xs text-muted">
-            Budget <Money paise={category.monthlyBudget} tone="default" className="font-medium" /> / month
-          </p>
-        )}
-      </div>
+      </Link>
       <div className="flex items-center gap-1 opacity-100 sm:opacity-0 transition-opacity focus-within:opacity-100 sm:group-hover:opacity-100">
         <Button variant="ghost" size="icon" onClick={onEdit} aria-label={`Edit ${category.name}`}>
           <Pencil className="h-4 w-4" />

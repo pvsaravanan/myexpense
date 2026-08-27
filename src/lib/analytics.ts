@@ -1,9 +1,11 @@
 import "server-only";
+import { prisma } from "./db";
 import { getUserAccounts, getUserCategories, loadBudget, loadCalcTxns } from "./queries";
 import {
   accountBalance,
   averageDailySpend,
   budgetStatus,
+  categorySpend,
   categoryTotals,
   dailySeries,
   filterRange,
@@ -389,4 +391,95 @@ function cappedEnd(start: Date, end: Date): Date {
   const now = new Date();
   if (now < start || now >= end) return end;
   return new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+}
+
+export interface CategoryDetail {
+  /** Net spend per month, oldest first, last 12 months. */
+  monthly: { label: string; month: number; year: number; net: number }[];
+  currentMonthSpent: number;
+  previousMonthSpent: number;
+  /** Percent change vs last month, or null when it can't be expressed (see percentChange). */
+  deltaPct: number | null;
+  /** Average monthly net spend over the 12-month window above. */
+  avgPerMonth: number;
+  /** All-time net spend (across every non-deleted transaction in this category). */
+  totalSpent: number;
+  transactionCount: number;
+  /** This category's share of this month's total effective expense, or null if there's no spend yet. */
+  shareOfMonthExpenses: number | null;
+  /** This month's total effective expense across every category, for the "share" chart. */
+  monthTotalExpenses: number;
+  budget: { limit: number; spent: number; status: BudgetStatus } | null;
+  /** Biggest merchants/descriptions within this category, by total spend, this year. */
+  topMerchants: { label: string; total: number; count: number }[];
+}
+
+/** Everything the category detail page needs for one category. */
+export async function getCategoryDetail(userId: string, categoryId: string): Promise<CategoryDetail> {
+  const nowKey = monthKeyOf(new Date());
+  const [txns, budget, merchantRows] = await Promise.all([
+    loadCalcTxns(userId),
+    loadBudget(userId, nowKey.year, nowKey.month),
+    // merchant/description breakdown needs fields loadCalcTxns doesn't select
+    // (it's shared/cached for the whole app), so this is a small dedicated query.
+    prisma.transaction.findMany({
+      where: { userId, categoryId, deletedAt: null, type: "expense" },
+      select: { merchant: true, description: true, amount: true },
+    }),
+  ]);
+
+  const catTxns = txns.filter((t) => t.categoryId === categoryId);
+
+  const monthly: CategoryDetail["monthly"] = [];
+  for (let i = 11; i >= 0; i--) {
+    const key = addMonths(nowKey, -i);
+    const r = monthRange(key);
+    const net = categorySpend(filterRange(catTxns, r.start, r.end), categoryId);
+    monthly.push({ label: monthName(key.month, true), month: key.month, year: key.year, net });
+  }
+
+  const currentRange = monthRange(nowKey);
+  const prevRange = monthRange(addMonths(nowKey, -1));
+  const currentMonthSpent = categorySpend(filterRange(catTxns, currentRange.start, currentRange.end), categoryId);
+  const previousMonthSpent = categorySpend(filterRange(catTxns, prevRange.start, prevRange.end), categoryId);
+  const deltaPct = percentChange(currentMonthSpent, previousMonthSpent);
+
+  const totalSpent = categorySpend(catTxns, categoryId);
+  const transactionCount = catTxns.filter((t) => t.type === "expense" || t.type === "refund").length;
+  const avgPerMonth = Math.round(monthly.reduce((sum, m) => sum + m.net, 0) / monthly.length);
+
+  const monthTotalExpense = summarize(filterRange(txns, currentRange.start, currentRange.end)).effectiveExpense;
+  const shareOfMonthExpenses = monthTotalExpense > 0 ? (currentMonthSpent / monthTotalExpense) * 100 : null;
+
+  const budgetLine = budget.categories.find((bc) => bc.categoryId === categoryId);
+  const budgetOut = budgetLine
+    ? { limit: budgetLine.limit, spent: currentMonthSpent, status: budgetStatus(currentMonthSpent, budgetLine.limit) }
+    : null;
+
+  const byMerchant = new Map<string, { total: number; count: number }>();
+  for (const r of merchantRows) {
+    const key = (r.merchant?.trim() || r.description?.trim() || "Other").slice(0, 60);
+    const entry = byMerchant.get(key) ?? { total: 0, count: 0 };
+    entry.total += r.amount;
+    entry.count += 1;
+    byMerchant.set(key, entry);
+  }
+  const topMerchants = [...byMerchant.entries()]
+    .map(([label, v]) => ({ label, ...v }))
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 6);
+
+  return {
+    monthly,
+    currentMonthSpent,
+    previousMonthSpent,
+    deltaPct,
+    avgPerMonth,
+    totalSpent,
+    transactionCount,
+    shareOfMonthExpenses,
+    monthTotalExpenses: monthTotalExpense,
+    budget: budgetOut,
+    topMerchants,
+  };
 }

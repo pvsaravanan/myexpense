@@ -82,6 +82,14 @@ export const transactionSchema = z
   .refine((d) => d.type !== "transfer" || (d.transferAccountId && d.transferAccountId !== d.accountId), {
     message: "Transfers need a different destination account",
     path: ["transferAccountId"],
+  })
+  // Transfers move money between your own accounts and have no category of
+  // their own; every other type must be filed under a real category — an
+  // "Uncategorized" bucket is still allowed to *exist* (old data, imports),
+  // it's just no longer a choice going forward.
+  .refine((d) => d.type === "transfer" || !!d.categoryId, {
+    message: "Choose a category",
+    path: ["categoryId"],
   });
 
 export type TransactionInput = z.infer<typeof transactionSchema>;
@@ -89,7 +97,7 @@ export type TransactionInput = z.infer<typeof transactionSchema>;
 /** One category/account allocation within a split expense. */
 export const splitPartSchema = z.object({
   amount: positivePaise,
-  categoryId: z.string().optional().nullable(),
+  categoryId: z.string().min(1, "Choose a category"),
   accountId: z.string().min(1, "Account is required"),
   description: z.string().trim().max(200).optional(),
 });
@@ -180,6 +188,10 @@ export const recurringSchema = z
   .refine((d) => !d.endDate || d.endDate >= d.startDate, {
     message: "End date must be on or after the start date",
     path: ["endDate"],
+  })
+  .refine((d) => d.type === "transfer" || !!d.categoryId, {
+    message: "Choose a category",
+    path: ["categoryId"],
   });
 
 export const goalSchema = z.object({
