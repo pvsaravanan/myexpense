@@ -88,13 +88,9 @@ export function TransactionForm({
   const [date, setDate] = useState(primary?.date ?? prefillDate ?? toISODate(new Date()));
   const [categoryId, setCategoryId] = useState(() => {
     if (primary?.categoryId) return primary.categoryId;
-    // Category is mandatory now, so a brand-new expense/income form starts
-    // pre-selected on the first eligible category rather than blank.
-    const startType = editingGroup ? "expense" : primary?.type ?? "expense";
-    if (startType === "transfer") return "";
-    const wantIncome = startType === "income";
-    const first = categories.find((c) => c.isActive && (wantIncome ? c.kind === "income" || c.kind === "both" : c.kind === "expense" || c.kind === "both"));
-    return first?.id ?? "";
+    // New transactions start with no category selected; the user either picks
+    // one manually or the app auto-suggests from the description.
+    return "";
   });
   const [newCatOpen, setNewCatOpen] = useState(false);
   const fallbackAccountId = accounts.find((a) => a.id === preference.defaultAccountId)?.id ?? accounts[0]?.id ?? "";
@@ -111,6 +107,7 @@ export function TransactionForm({
   const [tags, setTags] = useState<string[]>(primary?.tags ?? []);
   const [tagInput, setTagInput] = useState("");
   const [touchedCategory, setTouchedCategory] = useState(editingSingle);
+  const [autoSuggestedName, setAutoSuggestedName] = useState<string | null>(null);
 
   // Split-by-category/account. Locked ON when editing an existing group;
   // otherwise only offered when creating a fresh expense (converting an
@@ -163,6 +160,30 @@ export function TransactionForm({
     const match = eligibleCategories.find((c) => c.name.toLowerCase() === name.toLowerCase());
     return match ?? null;
   }, [description, isTransfer, splitEnabled, touchedCategory, categoryId, eligibleCategories]);
+
+  // Auto-apply the suggested category when the user types a description.
+  // Only for new transactions — never override a manually-picked category.
+  useEffect(() => {
+    if (editing) return;
+    if (isTransfer || splitEnabled || touchedCategory) return;
+    const trimmed = description.trim();
+    if (!trimmed) {
+      setAutoSuggestedName(null);
+      return;
+    }
+    const name = suggestCategory(trimmed);
+    if (!name) {
+      setAutoSuggestedName(null);
+      return;
+    }
+    const match = eligibleCategories.find((c) => c.name.toLowerCase() === name.toLowerCase());
+    if (match) {
+      setCategoryId(match.id);
+      setAutoSuggestedName(match.name);
+    } else {
+      setAutoSuggestedName(null);
+    }
+  }, [description, isTransfer, splitEnabled, touchedCategory, editing, eligibleCategories]);
 
   function addTag(value: string) {
     const v = value.trim();
@@ -365,10 +386,9 @@ export function TransactionForm({
                 wantIncome ? c.kind === "income" || c.kind === "both" : c.kind === "expense" || c.kind === "both";
               const cat = categories.find((c) => c.id === prev);
               if (cat && matches(cat)) return prev;
-              // Switching to a type the current category doesn't fit — fall
-              // back to the first eligible one so the field stays filled
-              // (category is mandatory) rather than reverting to blank.
-              return categories.find((c) => c.isActive && matches(c))?.id ?? "";
+              // Switching to a type the current category doesn't fit — clear
+              // the selection so the user (or auto-suggest) can pick anew.
+              return "";
             });
           }}
           options={TYPE_OPTIONS}
@@ -411,18 +431,11 @@ export function TransactionForm({
         />
       </Field>
 
-      {suggestion && (
-        <button
-          type="button"
-          onClick={() => {
-            setCategoryId(suggestion.id);
-            setTouchedCategory(true);
-          }}
-          className="inline-flex items-center gap-1.5 rounded-none border border-brand/30 bg-brand-soft px-2.5 py-1 text-xs font-medium text-brand-hover transition-colors hover:bg-brand/15"
-        >
+      {autoSuggestedName && !touchedCategory && (
+        <p className="inline-flex items-center gap-1.5 text-xs text-brand-hover">
           <Sparkles className="h-3.5 w-3.5" />
-          Suggested: {suggestion.name}
-        </button>
+          Auto-categorized as {autoSuggestedName}
+        </p>
       )}
 
       {splitEnabled ? (

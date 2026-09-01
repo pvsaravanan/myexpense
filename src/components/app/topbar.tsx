@@ -1,7 +1,6 @@
 "use client";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
-import { ThemeToggle } from "./theme-toggle";
 import { UserMenu } from "./user-menu";
 
 export function Topbar() {
@@ -13,7 +12,6 @@ export function Topbar() {
         </Link>
       </div>
       <div className="ml-auto flex items-center gap-2 sm:gap-3">
-        <ThemeToggle />
         <UserMenu />
       </div>
     </header>

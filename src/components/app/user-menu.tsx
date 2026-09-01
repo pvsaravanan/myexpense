@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { LogOut } from "lucide-react";
+import { LogOut, Settings } from "lucide-react";
 import { useAppData } from "./app-data";
 import { useToast } from "@/components/ui/toast";
 import { createClient } from "@/lib/supabase/client";
@@ -48,9 +49,9 @@ export function UserMenu() {
       >
         {user.avatarUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={user.avatarUrl} alt="" className="h-7 w-7 shrink-0 rounded-none border border-border object-cover" />
+          <img src={user.avatarUrl} alt="" className="h-7 w-7 shrink-0 rounded-full border border-border object-cover" />
         ) : (
-          <span className="flex h-7 w-7 items-center justify-center rounded-none text-sm font-bold text-brand">
+          <span className="flex h-7 w-7 items-center justify-center rounded-full border border-border bg-surface-2 text-sm font-bold text-brand">
             {initials || "U"}
           </span>
         )}
@@ -65,6 +66,16 @@ export function UserMenu() {
             <p className="truncate text-sm font-medium text-fg">{user.name}</p>
             <p className="truncate text-xs text-muted">{user.email}</p>
           </div>
+          <div className="my-1 h-px bg-border" />
+          <Link
+            href="/settings"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className="flex w-full items-center gap-2 rounded-none px-3 py-2 text-sm text-fg transition-colors hover:bg-surface-2"
+          >
+            <Settings className="h-4 w-4 text-muted" />
+            Settings
+          </Link>
           <div className="my-1 h-px bg-border" />
           <button
             role="menuitem"

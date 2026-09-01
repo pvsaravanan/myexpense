@@ -8,7 +8,7 @@ import { apiPatch, apiPost, ApiError } from "@/lib/http";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/cn";
 import { useAppData } from "@/components/app/app-data";
-import { ThemeToggle } from "@/components/app/theme-toggle";
+import { ThemeSelector } from "@/components/app/theme-selector";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Select } from "@/components/ui/field";
@@ -206,9 +206,9 @@ export function SettingsView() {
           <div className="flex items-center gap-4">
             {user.avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={user.avatarUrl} alt="" className="h-16 w-16 shrink-0 rounded-none border border-border object-cover" />
+              <img src={user.avatarUrl} alt="" className="h-16 w-16 shrink-0 rounded-full border border-border object-cover" />
             ) : (
-              <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-none border border-border text-xl font-bold text-brand">
+              <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-border bg-surface-2 text-xl font-bold text-brand">
                 {initials || "U"}
               </span>
             )}
@@ -267,9 +267,14 @@ export function SettingsView() {
       {/* Appearance */}
       <Card>
         <CardHeader title="Appearance" subtitle="Choose how baaki looks." />
-        <CardBody className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-fg">Theme — Light / Dark</p>
-          <ThemeToggle />
+        <CardBody className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-fg">Theme</p>
+            <ThemeSelector />
+          </div>
+          <p className="text-xs text-muted">
+            System follows your device&apos;s light or dark mode setting.
+          </p>
         </CardBody>
       </Card>
 

@@ -20,11 +20,11 @@ export function AppShell({
       <TransactionModalProvider>
         <SidebarProvider>
           <RunDueRecurring />
-          <div className="flex min-h-screen">
+          <div className="flex h-screen overflow-hidden">
             <Sidebar />
-            <div className="flex min-w-0 flex-1 flex-col">
+            <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
               <Topbar />
-              <main className="flex-1 overflow-x-hidden px-4 pb-24 pt-5 sm:px-6 md:pb-8 lg:px-8">
+              <main className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain px-4 pb-24 pt-5 sm:px-6 md:pb-8 lg:px-8">
                 <div className="mx-auto w-full min-w-0 max-w-6xl">
                   <PageTransition>{children}</PageTransition>
                 </div>

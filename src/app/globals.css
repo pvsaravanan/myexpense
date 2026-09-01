@@ -80,11 +80,17 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
+html {
+  overflow-x: hidden;
+  overscroll-behavior: none;
+}
+
 body {
   background-color: hsl(var(--bg));
   color: hsl(var(--fg));
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  overscroll-behavior: none;
 }
 
 /* Headlines are heavy and negatively tracked — poster-like rhythm. */

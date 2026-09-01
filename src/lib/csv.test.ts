@@ -107,6 +107,14 @@ describe("validateImportRows", () => {
     expect(result.valid[0].type).toBe("expense");
     expect(result.valid[1].type).toBe("income");
   });
+
+  it("rejects transfer rows — import has no destination-account column", () => {
+    const rows = [{ "Txn Date": "2026-08-01", Details: "To savings", Amount: "1000", Type: "transfer" }];
+    const result = validateImportRows(rows, mapping);
+    expect(result.valid).toHaveLength(0);
+    expect(result.invalid).toHaveLength(1);
+    expect(result.invalid[0].errors.join(" ")).toMatch(/[Tt]ransfer/);
+  });
 });
 
 describe("dedupeKey", () => {

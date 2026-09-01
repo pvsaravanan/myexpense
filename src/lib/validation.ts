@@ -90,6 +90,14 @@ export const transactionSchema = z
   .refine((d) => d.type === "transfer" || !!d.categoryId, {
     message: "Choose a category",
     path: ["categoryId"],
+  })
+  // People-shares split the *cost* of something — meaningless for a transfer,
+  // which just moves your own money between your own accounts. The UI never
+  // offers sharing for a transfer; enforce it here too so a direct API call
+  // can't attach shares to one.
+  .refine((d) => d.type !== "transfer" || !d.shares?.length, {
+    message: "Transfers can't be split with people",
+    path: ["shares"],
   });
 
 export type TransactionInput = z.infer<typeof transactionSchema>;

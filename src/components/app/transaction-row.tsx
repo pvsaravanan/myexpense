@@ -43,7 +43,9 @@ export function TransactionRow({
 
   const cat = txn.categoryId ? category(txn.categoryId) : null;
   const isTransfer = txn.type === "transfer";
-  const signed = txn.type === "expense" ? -txn.amount : txn.type === "transfer" ? txn.amount : txn.amount;
+  // Expenses reduce the balance; income, refunds and transfers all display as a
+  // positive amount (the tone/sign props below distinguish them visually).
+  const signed = txn.type === "expense" ? -txn.amount : txn.amount;
 
   const done = () => {
     refresh();

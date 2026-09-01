@@ -58,9 +58,13 @@ function toData(userId: string, input: TransactionInput): Prisma.TransactionUnch
 
 export async function createTransaction(userId: string, input: TransactionInput): Promise<string> {
   await assertOwnership(userId, input);
+  // Shares split a cost and are meaningless for a transfer (see the matching
+  // schema refinement in validation.ts); drop them defensively so a transfer
+  // can never carry shares regardless of how this function is called.
+  const shares = input.type === "transfer" ? undefined : input.shares;
   // Validate shares before creating the row so an over-cap share fails fast
   // instead of leaving an orphaned transaction behind.
-  if (input.shares?.length) await assertSharesValid(userId, input.shares, input.amount);
+  if (shares?.length) await assertSharesValid(userId, shares, input.amount);
   const tagIds = await resolveTagIds(userId, input.tags ?? []);
   const created = await prisma.transaction.create({
     data: {
@@ -68,7 +72,7 @@ export async function createTransaction(userId: string, input: TransactionInput)
       tags: { create: tagIds.map((tagId) => ({ tagId })) },
     },
   });
-  if (input.shares?.length) await attachShares(userId, created.id, input.shares);
+  if (shares?.length) await attachShares(userId, created.id, shares);
   return created.id;
 }
 
@@ -76,9 +80,13 @@ export async function updateTransaction(userId: string, id: string, input: Trans
   const existing = await prisma.transaction.findFirst({ where: { id, userId, deletedAt: null }, select: { id: true } });
   if (!existing) throw new NotFoundError("Transaction not found");
   await assertOwnership(userId, input);
+  // A transfer can never carry shares (see createTransaction / validation.ts).
+  // Forcing an empty array here also clears any shares left over should an
+  // existing expense be edited into a transfer.
+  const shares = input.type === "transfer" ? [] : input.shares;
   // Validate shares before mutating the row so invalid shares don't commit the
   // edit (and blow away the old tags) and only then throw.
-  if (input.shares !== undefined) await assertSharesValid(userId, input.shares, input.amount);
+  if (shares !== undefined) await assertSharesValid(userId, shares, input.amount);
   const tagIds = await resolveTagIds(userId, input.tags ?? []);
   await prisma.$transaction([
     prisma.transactionTag.deleteMany({ where: { transactionId: id } }),
@@ -92,7 +100,7 @@ export async function updateTransaction(userId: string, id: string, input: Trans
   ]);
   // `shares` omitted entirely means "leave as-is"; an explicit (possibly
   // empty) array means "replace with this".
-  if (input.shares !== undefined) await attachShares(userId, id, input.shares);
+  if (shares !== undefined) await attachShares(userId, id, shares);
   // Re-fetch once, fully hydrated, so the returned row reflects the shares
   // change above rather than the pre-attachShares snapshot.
   return prisma.transaction.findUniqueOrThrow({

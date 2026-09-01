@@ -181,6 +181,16 @@ export function validateImportRows(
       else if (["credit", "cr", "deposit", "received"].includes(rawType)) type = "income";
     }
 
+    // Transfers need a destination account (see accountBalance's double-entry
+    // logic), but the import mapping has no "to account" column — so a transfer
+    // row would persist with transferAccountId = null and leak money out of the
+    // source account with nothing arriving anywhere. Reject it explicitly rather
+    // than import a balance-breaking row. (Only an explicit Type column can
+    // produce "transfer"; sign inference never does.)
+    if (type === "transfer") {
+      errors.push("Transfers can't be imported — record them manually, or map this row as an expense/income");
+    }
+
     if (typeIsAmbiguous) {
       errors.push("Cannot tell income from expense — map a Type/Debit-Credit column (this file has no negative amounts)");
     }
